@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/openuniland/good-guy/configs"
 	"github.com/openuniland/good-guy/external/facebook"
+	"github.com/openuniland/good-guy/external/types"
 	"github.com/rs/zerolog/log"
 )
 
@@ -16,7 +18,7 @@ type FacebookUS struct {
 	cfg *configs.Configs
 }
 
-func NewCtmsUseCase(cfg *configs.Configs) facebook.UseCase {
+func NewFacebookUseCase(cfg *configs.Configs) facebook.UseCase {
 	return &FacebookUS{cfg: cfg}
 }
 
@@ -55,8 +57,60 @@ func (us *FacebookUS) SendMessage(ctx context.Context, id string, message interf
 
 	if resp.StatusCode != http.StatusOK {
 		log.Error().Err(err).Msg("error response from Facebook API")
-		return err
+
+		return errors.New("error response from Facebook API")
 	}
 
 	return nil
+}
+
+func (us *FacebookUS) SendTextMessage(ctx context.Context, id string, text string) error {
+	message := map[string]string{
+		"text": text,
+	}
+
+	return us.SendMessage(ctx, id, message)
+}
+
+func (us *FacebookUS) SendImageMessage(ctx context.Context, id string, url string) error {
+	message := map[string]interface{}{
+		"attachment": map[string]interface{}{
+			"type": "image",
+			"payload": map[string]string{
+				"url": url,
+			},
+		},
+	}
+
+	return us.SendMessage(ctx, id, message)
+}
+
+func (us *FacebookUS) SendButtonMessage(ctx context.Context, id string, input *types.SendButtonMessageRequest) error {
+
+	message := map[string]interface{}{
+		"attachment": map[string]interface{}{
+			"type": "template",
+			"payload": map[string]interface{}{
+				"template_type": "generic",
+				"elements": []map[string]interface{}{
+					{
+						"title":     input.Title,
+						"image_url": input.ImageUrl,
+						"subtitle":  input.Subtitle,
+						"buttons": []map[string]interface{}{
+							{
+								"type":                 "web_url",
+								"url":                  input.Url,
+								"title":                input.BtnText,
+								"messenger_extensions": true,
+								"webview_height_ratio": "tall",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return us.SendMessage(ctx, id, message)
 }
