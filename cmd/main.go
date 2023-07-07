@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -24,9 +25,11 @@ func main() {
 	}
 
 	redisClient, err := mongodb.NewMongoDBClient(configs)
+
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create mongodb client")
 	}
+	defer redisClient.Disconnect(context.Background())
 
 	runGinServer(configs, redisClient)
 

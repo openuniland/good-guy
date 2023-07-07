@@ -6,25 +6,25 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/openuniland/good-guy/configs"
 	"github.com/openuniland/good-guy/external/ctms"
-	"github.com/openuniland/good-guy/external/models"
+	"github.com/openuniland/good-guy/external/types"
 	"github.com/openuniland/good-guy/pkg/utils"
 )
 
 type ctmsHandlers struct {
 	cfg    *configs.Configs
-	authUC ctms.UseCase
+	ctmsUC ctms.UseCase
 }
 
-func NewCtmsHandlers(cfg *configs.Configs, authUC ctms.UseCase) ctms.Handlers {
+func NewCtmsHandlers(cfg *configs.Configs, ctmsUC ctms.UseCase) ctms.Handlers {
 	return &ctmsHandlers{
 		cfg:    cfg,
-		authUC: authUC,
+		ctmsUC: ctmsUC,
 	}
 }
 
 func (c *ctmsHandlers) Login() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user := &models.LoginRequest{}
+		user := &types.LoginRequest{}
 
 		if err := ctx.ShouldBindJSON(user); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
@@ -41,7 +41,7 @@ func (c *ctmsHandlers) Login() gin.HandlerFunc {
 			return
 		}
 
-		cookie, err := c.authUC.Login(ctx, user)
+		cookie, err := c.ctmsUC.Login(ctx, user)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
@@ -56,7 +56,7 @@ func (c *ctmsHandlers) Login() gin.HandlerFunc {
 }
 func (c *ctmsHandlers) Logout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		req := &models.LogoutRequest{}
+		req := &types.LogoutRequest{}
 
 		if err := ctx.ShouldBindJSON(req); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
@@ -73,7 +73,7 @@ func (c *ctmsHandlers) Logout() gin.HandlerFunc {
 			return
 		}
 
-		err = c.authUC.Logout(ctx, req.Cookie)
+		err = c.ctmsUC.Logout(ctx, req.Cookie)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),

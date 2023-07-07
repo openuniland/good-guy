@@ -12,7 +12,7 @@ import (
 
 	"github.com/openuniland/good-guy/configs"
 	"github.com/openuniland/good-guy/external/ctms"
-	"github.com/openuniland/good-guy/external/models"
+	"github.com/openuniland/good-guy/external/types"
 	"github.com/rs/zerolog/log"
 )
 
@@ -26,7 +26,7 @@ func NewCtmsUseCase(cfg *configs.Configs) ctms.UseCase {
 	return &CtmsUS{cfg: cfg}
 }
 
-func (us *CtmsUS) Login(ctx context.Context, user *models.LoginRequest) (*models.LoginResponse, error) {
+func (us *CtmsUS) Login(ctx context.Context, user *types.LoginRequest) (*types.LoginResponse, error) {
 
 	ctmsUrl := us.cfg.UrlCrawlerList.CtmsUrl
 
@@ -78,20 +78,20 @@ func (us *CtmsUS) Login(ctx context.Context, user *models.LoginRequest) (*models
 	cookie := resp.Header.Get("Set-Cookie")
 
 	if bytes.Contains(body, []byte("Xin chào mừng")) {
-		return &models.LoginResponse{
+		return &types.LoginResponse{
 			Cookie:    cookie,
 			IsSuccess: true,
 		}, nil
 	}
 
 	if bytes.Contains(body, []byte("Sai Tên đăng nhập hoặc Mật khẩu")) {
-		return &models.LoginResponse{
+		return &types.LoginResponse{
 			Cookie:    "",
 			IsSuccess: false,
 		}, nil
 	}
 
-	return &models.LoginResponse{
+	return &types.LoginResponse{
 		Cookie:    "",
 		IsSuccess: false,
 	}, nil

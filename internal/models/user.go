@@ -4,14 +4,14 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type User struct {
 	Id                  primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Username            string             `json:"username" validate:"required"`
-	Password            string             `json:"password" validate:"required"`
-	SubscribedID        string             `json:"subscribed_id"`
-	SubjectHTML         string             `json:"subject_html"`
-	IsSubscribedSubject bool               `json:"is_subscribed_subject"`
-	IsTrackTimetable    bool               `json:"is_track_timetable"`
-	IsExamDay           bool               `json:"is_exam_day"`
-	IsDeleted           bool               `json:"is_deleted" default:"false"`
-	CreatedAt           string             `json:"created_at"`
-	UpdatedAt           string             `json:"updated_at"`
+	Username            string             `bson:"username" json:"username" validate:"required"`
+	Password            string             `bson:"password" json:"password" validate:"required"`
+	SubscribedID        string             `bson:"subscribed_id" json:"subscribed_id"`
+	SubjectHTML         string             `bson:"subject_html" json:"subject_html"`
+	IsSubscribedSubject bool               `bson:"is_subscribed_subject" json:"is_subscribed_subject"`
+	IsTrackTimetable    bool               `bson:"is_track_timetable" json:"is_track_timetable"`
+	IsExamDay           bool               `bson:"is_exam_day" json:"is_exam_day"`
+	IsDeleted           bool               `bson:"is_deleted" json:"is_deleted" default:"false"`
+	CreatedAt           primitive.DateTime `bson:"created_at" json:"created_at"`
+	UpdatedAt           primitive.DateTime `bson:"updated_at" json:"updated_at"`
 }

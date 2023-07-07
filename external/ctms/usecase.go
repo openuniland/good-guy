@@ -3,10 +3,10 @@ package ctms
 import (
 	"context"
 
-	"github.com/openuniland/good-guy/external/models"
+	"github.com/openuniland/good-guy/external/types"
 )
 
 type UseCase interface {
-	Login(ctx context.Context, user *models.LoginRequest) (*models.LoginResponse, error)
+	Login(ctx context.Context, user *types.LoginRequest) (*types.LoginResponse, error)
 	Logout(ctx context.Context, cookie string) error
 }

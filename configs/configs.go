@@ -22,8 +22,9 @@ type ServerConfig struct {
 }
 
 type UrlCrawlerList struct {
-	FithouUrl string `mapstructure:"FITHOU_URL"`
-	CtmsUrl   string `mapstructure:"CTMS_URL"`
+	FithouUrl           string `mapstructure:"FITHOU_URL"`
+	CtmsUrl             string `mapstructure:"CTMS_URL"`
+	FithouCategoriesUrl string `mapstructure:"FITHOU_CATEGORIES_URL"`
 }
 
 type FBConfig struct {
@@ -45,8 +46,9 @@ type MappingConfigs struct {
 	MongoDBName       string `mapstructure:"MONGODB_NAME"`
 	MongoDBProtocol   string `mapstructure:"MONGODB_PROTOCOL"`
 
-	FithouUrl string `mapstructure:"FITHOU_URL"`
-	CtmsUrl   string `mapstructure:"CTMS_URL"`
+	FithouUrl           string `mapstructure:"FITHOU_URL"`
+	CtmsUrl             string `mapstructure:"CTMS_URL"`
+	FithouCategoriesUrl string `mapstructure:"FITHOU_CATEGORIES_URL"`
 
 	FBVerifyToken string `mapstructure:"FB_VERIFY_TOKEN"`
 	AppCode       string `mapstructure:"APP_CODE"`
@@ -91,8 +93,9 @@ func LoadConfigs(path string) (configs *Configs, err error) {
 			MongoDBProtocol:   mapping.MongoDBProtocol,
 		},
 		UrlCrawlerList: UrlCrawlerList{
-			FithouUrl: mapping.FithouUrl,
-			CtmsUrl:   mapping.CtmsUrl,
+			FithouUrl:           mapping.FithouUrl,
+			CtmsUrl:             mapping.CtmsUrl,
+			FithouCategoriesUrl: mapping.FithouCategoriesUrl,
 		},
 		FBConfig: FBConfig{
 			FBVerifyToken: mapping.FBVerifyToken,

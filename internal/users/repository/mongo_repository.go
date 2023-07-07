@@ -8,10 +8,11 @@ import (
 	"github.com/openuniland/good-guy/internal/models"
 	"github.com/openuniland/good-guy/internal/users"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var collectionName = "users"
+var collectionName = "tes_users"
 
 type userRepo struct {
 	mongoClient *mongo.Client
@@ -27,7 +28,7 @@ func (u *userRepo) Create(ctx context.Context, user *models.User) (*mongo.Insert
 
 	coll := u.mongoClient.Database(dbName).Collection(collectionName)
 
-	user.CreatedAt = time.Now().Format(time.RFC3339)
+	user.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 	res, err := coll.InsertOne(ctx, user)
 	if err != nil {
 		return nil, err
