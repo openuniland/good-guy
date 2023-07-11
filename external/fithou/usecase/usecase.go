@@ -41,7 +41,7 @@ func (us *FithouUS) CrawlArticlesFromFirstPage(ctx context.Context) ([]*types.Ar
 
 	var articles []*types.ArticleCrawl
 
-	doc.Find("#LeftCol_pnlCategory div[class=article]").Each(func(i int, s *goquery.Selection) {
+	doc.Find("#LeftCol_pnlCategory div[class=article]").Each(func(_ int, s *goquery.Selection) {
 		title := s.Find("a").Text()
 		link, _ := s.Find("a").Attr("href")
 		re := regexp.MustCompile(`aid=(\d+)`)

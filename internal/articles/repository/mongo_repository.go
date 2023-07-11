@@ -151,7 +151,11 @@ func (a *articleRepo) FindOneAndUpdate(ctx context.Context, filter interface{}, 
 
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 
-	err := coll.FindOneAndUpdate(ctx, filter, update, opts).Decode(&article)
+	updateDoc := bson.M{
+		"$set": update,
+	}
+
+	err := coll.FindOneAndUpdate(ctx, filter, updateDoc, opts).Decode(&article)
 	if err != nil {
 		return nil, err
 	}

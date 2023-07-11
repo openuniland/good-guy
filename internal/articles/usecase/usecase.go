@@ -35,7 +35,7 @@ func (a *ArticleUS) FindOne(ctx context.Context) (*models.Article, error) {
 
 func (a *ArticleUS) UpdatedWithNewArticle(ctx context.Context) ([]*types.ArticleCrawl, error) {
 
-	article, err := a.FindOne(ctx)
+	oldArticle, err := a.FindOne(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("error while fetching articles")
 		return nil, err
@@ -47,32 +47,46 @@ func (a *ArticleUS) UpdatedWithNewArticle(ctx context.Context) ([]*types.Article
 		return nil, err
 	}
 
-	if len(articles) == 0 {
+	if len(articles) <= 0 {
 		return nil, nil
 	}
 
 	aidOfNewArticle := articles[0].Aid
-	aidOfOldArticle := article.Aid
+	aidOfOldArticle := oldArticle.Aid
 
 	var index int
+	if articles[len(articles)-1].Aid > aidOfOldArticle {
+		index = len(articles) - 1
+	}
 
-	if aidOfNewArticle != aidOfOldArticle+1 {
+	if aidOfNewArticle != aidOfOldArticle {
 		for i := 0; i < len(articles); i++ {
-			if articles[i].Aid == aidOfOldArticle+1 {
+			if articles[i].Aid == aidOfOldArticle {
 				index = i
 				break
 			}
 		}
 	}
 
-	articles = articles[:index]
+	if index != 0 {
+		articles = articles[:index]
+	}
 
-	a.articleRepo.FindOneAndUpdate(ctx, bson.D{
+	_, err = a.articleRepo.FindOneAndUpdate(ctx, bson.D{
 		{
 			Key:   "_id",
-			Value: article.Id,
+			Value: oldArticle.Id,
 		},
 	}, articles[0])
+
+	if index == 0 {
+		return articles[:1], nil
+	}
+
+	if err != nil {
+		log.Error().Err(err).Msg("error while fetching articles")
+		return nil, err
+	}
 
 	return articles, nil
 }
