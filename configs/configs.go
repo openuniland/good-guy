@@ -32,6 +32,10 @@ type FBConfig struct {
 	AppCode       string `mapstructure:"APP_CODE"`
 }
 
+type Jobs struct {
+	SyncArticlesFromFithou string `mapstructure:"SYNC_ARTICLES_FROM_FITHOU"`
+}
+
 type MappingConfigs struct {
 	HttpServerAddress string `mapstructure:"HTTP_SERVER_ADDRESS"`
 	Env               string `mapstructure:"ENV"`
@@ -52,6 +56,8 @@ type MappingConfigs struct {
 
 	FBVerifyToken string `mapstructure:"FB_VERIFY_TOKEN"`
 	AppCode       string `mapstructure:"APP_CODE"`
+
+	SyncArticlesFromFithou string `mapstructure:"SYNC_ARTICLES_FROM_FITHOU"`
 }
 
 type Configs struct {
@@ -59,6 +65,7 @@ type Configs struct {
 	MongoDB        MongoDB        `json:"mongodb"`
 	UrlCrawlerList UrlCrawlerList `json:"url_crawler_list"`
 	FBConfig       FBConfig       `json:"fb_config"`
+	Jobs           Jobs           `json:"jobs"`
 }
 
 func LoadConfigs(path string) (configs *Configs, err error) {
@@ -100,6 +107,9 @@ func LoadConfigs(path string) (configs *Configs, err error) {
 		FBConfig: FBConfig{
 			FBVerifyToken: mapping.FBVerifyToken,
 			AppCode:       mapping.AppCode,
+		},
+		Jobs: Jobs{
+			SyncArticlesFromFithou: mapping.SyncArticlesFromFithou,
 		},
 	}
 

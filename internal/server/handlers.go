@@ -7,6 +7,7 @@ import (
 	fithouHttp "github.com/openuniland/good-guy/external/fithou/delivery"
 	articleHttp "github.com/openuniland/good-guy/internal/articles/delivery"
 	userHttp "github.com/openuniland/good-guy/internal/users/delivery"
+	"github.com/openuniland/good-guy/jobs"
 
 	ctmsUS "github.com/openuniland/good-guy/external/ctms/usecase"
 	facebookUS "github.com/openuniland/good-guy/external/facebook/usecase"
@@ -40,6 +41,10 @@ func (server *Server) MapHandlers() {
 	fithouHandlers := fithouHttp.NewFithouHandlers(server.configs, fithouUS)
 	facebookHandlers := facebookHttp.NewFacebookHandlers(server.configs, facebookUS)
 	userHandlers := userHttp.NewArticleHandlers(server.configs, userUS)
+
+	// Jobs
+	jobs := jobs.NewJobs(server.configs, articleUS, userUS, facebookUS)
+	jobs.Run()
 
 	// Init routes
 	v1 := router.Group("/v1")

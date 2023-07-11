@@ -5,3 +5,8 @@ type ArticleCrawl struct {
 	Link  string `json:"link"`
 	Aid   int    `json:"aid"`
 }
+
+type UpdatedWithNewArticleResponse struct {
+	Data  []*ArticleCrawl `json:"data"`
+	IsNew bool            `json:"is_new"`
+}

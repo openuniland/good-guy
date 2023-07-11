@@ -33,7 +33,7 @@ func (a *ArticleUS) FindOne(ctx context.Context) (*models.Article, error) {
 	return articles, nil
 }
 
-func (a *ArticleUS) UpdatedWithNewArticle(ctx context.Context) ([]*types.ArticleCrawl, error) {
+func (a *ArticleUS) UpdatedWithNewArticle(ctx context.Context) (*types.UpdatedWithNewArticleResponse, error) {
 
 	oldArticle, err := a.FindOne(ctx)
 	if err != nil {
@@ -71,6 +71,12 @@ func (a *ArticleUS) UpdatedWithNewArticle(ctx context.Context) ([]*types.Article
 	if index != 0 {
 		articles = articles[:index]
 	}
+	if index == 0 {
+		return &types.UpdatedWithNewArticleResponse{
+			Data:  articles[:1],
+			IsNew: false,
+		}, nil
+	}
 
 	_, err = a.articleRepo.FindOneAndUpdate(ctx, bson.D{
 		{
@@ -79,14 +85,13 @@ func (a *ArticleUS) UpdatedWithNewArticle(ctx context.Context) ([]*types.Article
 		},
 	}, articles[0])
 
-	if index == 0 {
-		return articles[:1], nil
-	}
-
 	if err != nil {
 		log.Error().Err(err).Msg("error while fetching articles")
 		return nil, err
 	}
 
-	return articles, nil
+	return &types.UpdatedWithNewArticleResponse{
+		Data:  articles,
+		IsNew: true,
+	}, nil
 }
