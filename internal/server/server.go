@@ -18,10 +18,6 @@ func NewServer(configs *configs.Configs, mongoClient *mongo.Client) (*Server, er
 
 	server := &Server{configs: configs, mongoClient: mongoClient}
 
-	if server.configs.Server.Env != "dev" {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
 	return server, nil
 }
 

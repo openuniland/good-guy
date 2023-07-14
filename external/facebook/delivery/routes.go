@@ -8,4 +8,6 @@ import (
 func MapFacebookRoutes(facebookGroup *gin.RouterGroup, h facebook.Handlers) {
 	facebookGroup.POST("/messages/text/:id", h.SendMessage())
 	facebookGroup.POST("/messages/button/:id", h.SendButtonMessage())
+	facebookGroup.GET("/webhook", h.VerifyFacebookWebhook())
+	facebookGroup.POST("/webhook", h.HandleFacebookWebhook())
 }
