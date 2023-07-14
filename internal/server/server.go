@@ -29,7 +29,10 @@ func (server *Server) Start(address string) error {
 
 	server.MapHandlers()
 	log.Info().Msg("starting HTTP server")
-	return server.router.Run(address)
+	if server.configs.Server.Env != "dev" {
+		return server.router.Run()
+	}
+	return server.router.Run(":" + address)
 }
 
 func (server *Server) HttpLogger() gin.IRoutes {

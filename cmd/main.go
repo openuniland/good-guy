@@ -14,7 +14,6 @@ import (
 )
 
 func main() {
-
 	configs, err := configs.LoadConfigs(".")
 	if err != nil {
 		fmt.Println(err)
@@ -24,14 +23,14 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	redisClient, err := mongodb.NewMongoDBClient(configs)
+	mongoClient, err := mongodb.NewMongoDBClient(configs)
 
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create mongodb client")
 	}
-	defer redisClient.Disconnect(context.Background())
+	defer mongoClient.Disconnect(context.Background())
 
-	runGinServer(configs, redisClient)
+	runGinServer(configs, mongoClient)
 
 }
 

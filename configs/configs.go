@@ -1,6 +1,8 @@
 package configs
 
 import (
+	"os"
+
 	"github.com/spf13/viper"
 )
 
@@ -69,6 +71,40 @@ type Configs struct {
 }
 
 func LoadConfigs(path string) (configs *Configs, err error) {
+	if os.Getenv("ENV") == ".env" {
+		configs = &Configs{
+			Server: ServerConfig{
+				HttpServerAddress: os.Getenv("HTTP_SERVER_ADDRESS"),
+				Env:               os.Getenv("ENV"),
+				AuthKey:           os.Getenv("AUTH_KEY"),
+				Host:              os.Getenv("HOST"),
+				Tz:                os.Getenv("TZ"),
+			},
+			MongoDB: MongoDB{
+				MongoDBUsername:   os.Getenv("MONGODB_USERNAME"),
+				MongoDBPassword:   os.Getenv("MONGODB_PASSWORD"),
+				MongoDBHost:       os.Getenv("MONGODB_HOST"),
+				MongoDBReplicaSet: os.Getenv("MONGODB_REPLICA_SET"),
+				MongoDBName:       os.Getenv("MONGODB_NAME"),
+				MongoDBProtocol:   os.Getenv("MONGODB_PROTOCOL"),
+			},
+			UrlCrawlerList: UrlCrawlerList{
+				FithouUrl:           os.Getenv("FITHOU_URL"),
+				CtmsUrl:             os.Getenv("CTMS_URL"),
+				FithouCategoriesUrl: os.Getenv("FITHOU_CATEGORIES_URL"),
+			},
+			FBConfig: FBConfig{
+				FBVerifyToken: os.Getenv("FB_VERIFY_TOKEN"),
+				AppCode:       os.Getenv("APP_CODE"),
+			},
+			Jobs: Jobs{
+				SyncArticlesFromFithou: os.Getenv("SYNC_ARTICLES_FROM_FITHOU"),
+			},
+		}
+
+		return configs, nil
+	}
+
 	var mapping *MappingConfigs
 	viper.AddConfigPath(path)
 	viper.SetConfigName("app")
