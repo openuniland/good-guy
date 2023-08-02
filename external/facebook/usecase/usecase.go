@@ -58,7 +58,6 @@ func (us *FacebookUS) SendMessage(ctx context.Context, id string, message interf
 
 	if resp.StatusCode != http.StatusOK {
 		log.Error().Err(err).Msg("error response from Facebook API")
-
 		return errors.New("error response from Facebook API")
 	}
 

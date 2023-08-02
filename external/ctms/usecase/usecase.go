@@ -5,18 +5,25 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/openuniland/good-guy/configs"
 	"github.com/openuniland/good-guy/external/ctms"
 	"github.com/openuniland/good-guy/external/types"
+	"github.com/openuniland/good-guy/pkg/utils"
 	"github.com/rs/zerolog/log"
 )
 
 const loginUrl = "/login.aspx"
+
+const SCHOOL_SCHEDULE_URL = "http://ctms.fithou.net.vn/Lichhoc.aspx?sid="
+const EXPIRED_CTMS = "Từ 2/2022, hãy thực hiện theo thông báo này để nhận được sự Hỗ trợ duy trì tài khoản truy cập CTMS từ khoa CNTT."
+const SESSION_EXPIRED_MESSAGE = "Phiên làm việc hết hạn hoặc Bạn không có quyền truy cập chức năng này"
 
 type CtmsUS struct {
 	cfg *configs.Configs
@@ -48,7 +55,7 @@ func (us *CtmsUS) Login(ctx context.Context, user *types.LoginRequest) (*types.L
 
 	req, err := http.NewRequest("POST", ctmsUrl+loginUrl, bytes.NewBufferString(data.Encode()))
 	if err != nil {
-		log.Error().Err(err).Msg("error create request")
+		log.Error().Msg("error create request login" + err.Error())
 		return nil, err
 	}
 
@@ -64,14 +71,14 @@ func (us *CtmsUS) Login(ctx context.Context, user *types.LoginRequest) (*types.L
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error().Err(err).Msg("error send request")
+		log.Err(err).Msg("error send request login" + err.Error())
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Error().Err(err).Msg("error read response")
+		log.Err(err).Msg("error read body login" + err.Error())
 		return nil, err
 	}
 
@@ -111,6 +118,8 @@ func (us *CtmsUS) Logout(ctx context.Context, cookie string) error {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", ctmsUrl+loginUrl, bytes.NewBufferString(data.Encode()))
 	if err != nil {
+
+		log.Err(err).Msg("error create request to logout" + err.Error())
 		return err
 	}
 
@@ -122,10 +131,108 @@ func (us *CtmsUS) Logout(ctx context.Context, cookie string) error {
 
 	_, err = client.Do(req)
 	if err != nil {
+		log.Err(err).Msg("error send request to logout" + err.Error())
 		return err
 	}
 
 	log.Info().Msg("logout success")
 
 	return nil
+}
+
+func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types.DailySchedule, error) {
+
+	date := utils.FormatDateTimeToGetDailySchedule()
+
+	data := url.Values{
+		"__EVENTTARGET":                         {""},
+		"__EVENTARGUMENT":                       {""},
+		"__VIEWSTATE":                           {"/wEPDwUKMTA4NDM3NDc2OGQYBwUzY3RsMDAkTGVmdENvbCRMaWNoaG9jMSRycHRyTGljaGhvYyRjdGwwNSRncnZMaWNoaG9jDzwrAAwBCAIBZAUzY3RsMDAkTGVmdENvbCRMaWNoaG9jMSRycHRyTGljaGhvYyRjdGwwMyRncnZMaWNoaG9jDzwrAAwBCGZkBTNjdGwwMCRMZWZ0Q29sJExpY2hob2MxJHJwdHJMaWNoaG9jJGN0bDAyJGdydkxpY2hob2MPPCsADAEIAgFkBTNjdGwwMCRMZWZ0Q29sJExpY2hob2MxJHJwdHJMaWNoaG9jJGN0bDA2JGdydkxpY2hob2MPPCsADAEIZmQFM2N0bDAwJExlZnRDb2wkTGljaGhvYzEkcnB0ckxpY2hob2MkY3RsMDEkZ3J2TGljaGhvYw88KwAMAQhmZAUzY3RsMDAkTGVmdENvbCRMaWNoaG9jMSRycHRyTGljaGhvYyRjdGwwNCRncnZMaWNoaG9jDzwrAAwBCGZkBTNjdGwwMCRMZWZ0Q29sJExpY2hob2MxJHJwdHJMaWNoaG9jJGN0bDAwJGdydkxpY2hob2MPPCsADAEIAgFkhO4CQTCT9FOotSw2ZoTf5gEBbXaed4Q4OAV5jtaoJYE="},
+		"__VIEWSTATEGENERATOR":                  {"CB78C13A"},
+		"__EVENTVALIDATION":                     {"/wEdAAPwrTvSkjO6MxCyG5nv8RpLWWWHEhzFiGyQmAroNHRecPGp81KLC9U2/agHpgpfb4atL2GQMaATghjy+bylAXhJAkV++jXlveksbno26k3dtg=="},
+		"ctl00$LeftCol$Lichhoc1$txtNgaydautuan": {date},
+		"ctl00$LeftCol$Lichhoc1$btnXemlich":     {"Xem+lịch"},
+	}
+
+	// Create HTTP client
+	client := &http.Client{}
+
+	// Prepare the request
+	req, err := http.NewRequest("POST", SCHOOL_SCHEDULE_URL, bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		log.Err(err).Msg("error create request to get daily schedule" + err.Error())
+		return nil, err
+	}
+	// Set request headers
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Cookie", cookie)
+	req.Header.Set("Origin", us.cfg.UrlCrawlerList.CtmsUrl)
+	req.Header.Set("Referer", SCHOOL_SCHEDULE_URL)
+	req.Header.Set("Upgrade-Insecure-Requests", "1")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
+
+	// Send the request
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Err(err).Msg("error send request to get daily schedule" + err.Error())
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		log.Err(err).Msg("error parse response to get daily schedule" + err.Error())
+		return nil, err
+	}
+
+	NoPermissionText := doc.Find(".NoPermission h3").Text()
+	if strings.TrimSpace(NoPermissionText) == SESSION_EXPIRED_MESSAGE {
+
+		log.Error().Msg("session expired")
+		return nil, errors.New("session expired")
+	}
+
+	expiredNotiText := doc.Find("#leftcontent #thongbao").Text()
+	if strings.TrimSpace(expiredNotiText) == EXPIRED_CTMS {
+
+		log.Error().Msg("need to buy ctm")
+		return nil, errors.New("need to buy ctm")
+	}
+
+	var dailyScheduleData []*types.DailySchedule
+	doc.Find("#leftcontent #LeftCol_Lichhoc1_pnView").ChildrenFiltered("div").Each(func(i int, s *goquery.Selection) {
+		day := s.First().Find("b").Text()
+
+		today := utils.TodayFormatted()
+
+		words := strings.Split(day, "\n")
+		date := ""
+
+		if len(words) >= 2 {
+			date = strings.TrimSpace(words[2])
+		}
+
+		if today == date {
+			s.Find("div table tbody tr").Each(func(j int, ss *goquery.Selection) {
+
+				if j != 0 {
+					res := &types.DailySchedule{
+						SerialNumber: strings.TrimSpace(ss.Find("td").Eq(0).Text()),
+						Time:         strings.TrimSpace(ss.Find("td").Eq(1).Text()),
+						ClassRoom:    strings.TrimSpace(ss.Find("td").Eq(2).Text()),
+						CourseName:   strings.TrimSpace(ss.Find("td").Eq(3).Text()),
+						Lecturer:     strings.TrimSpace(ss.Find("td").Eq(4).Text()),
+						ClassCode:    strings.TrimSpace(ss.Find("td").Eq(5).Text()),
+						Status:       strings.TrimSpace(ss.Find("td").Eq(6).Text()),
+					}
+
+					dailyScheduleData = append(dailyScheduleData, res)
+				}
+
+			})
+		}
+
+	})
+
+	return dailyScheduleData, nil
 }

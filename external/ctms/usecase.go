@@ -9,4 +9,5 @@ import (
 type UseCase interface {
 	Login(ctx context.Context, user *types.LoginRequest) (*types.LoginResponse, error)
 	Logout(ctx context.Context, cookie string) error
+	GetDailySchedule(ctx context.Context, cookie string) ([]*types.DailySchedule, error)
 }

@@ -10,19 +10,19 @@ func HelpScript() string {
 }
 
 type CommandType struct {
-	Login      string
-	Logout     string
-	Help       string
-	Examday    string
-	Un_examday string
+	Login     string
+	Logout    string
+	Help      string
+	Examday   string
+	UnExamday string
 }
 
 var command = CommandType{
-	Login:      "/login",
-	Logout:     "/logout",
-	Help:       "/help",
-	Examday:    "/examday",
-	Un_examday: "/un_examday",
+	Login:     "/login",
+	Logout:    "/logout",
+	Help:      "/help",
+	Examday:   "/examday",
+	UnExamday: "/un_examday",
 }
 
 func ChatScript(id string, msg string) string {
@@ -39,7 +39,7 @@ func ChatScript(id string, msg string) string {
 	case command.Examday:
 		//	return ""
 		return ""
-	case command.Un_examday:
+	case command.UnExamday:
 		//	return ""
 		return ""
 	default:

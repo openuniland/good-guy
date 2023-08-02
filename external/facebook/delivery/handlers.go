@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -80,8 +79,6 @@ func (f *facebookHandlers) SendButtonMessage() gin.HandlerFunc {
 		}
 
 		err = f.facebookUC.SendButtonMessage(ctx, id, message)
-
-		fmt.Println(err, "err")
 
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
