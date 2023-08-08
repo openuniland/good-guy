@@ -27,6 +27,7 @@ type UrlCrawlerList struct {
 	FithouUrl           string `mapstructure:"FITHOU_URL"`
 	CtmsUrl             string `mapstructure:"CTMS_URL"`
 	FithouCategoriesUrl string `mapstructure:"FITHOU_CATEGORIES_URL"`
+	ExamScheduleUrl     string `mapstructure:"EXAM_SCHEDULE_URL"`
 }
 
 type FBConfig struct {
@@ -55,6 +56,7 @@ type MappingConfigs struct {
 	FithouUrl           string `mapstructure:"FITHOU_URL"`
 	CtmsUrl             string `mapstructure:"CTMS_URL"`
 	FithouCategoriesUrl string `mapstructure:"FITHOU_CATEGORIES_URL"`
+	ExamScheduleUrl     string `mapstructure:"EXAM_SCHEDULE_URL"`
 
 	FBVerifyToken string `mapstructure:"FB_VERIFY_TOKEN"`
 	AppCode       string `mapstructure:"APP_CODE"`
@@ -92,6 +94,7 @@ func LoadConfigs(path string) (configs *Configs, err error) {
 				FithouUrl:           os.Getenv("FITHOU_URL"),
 				CtmsUrl:             os.Getenv("CTMS_URL"),
 				FithouCategoriesUrl: os.Getenv("FITHOU_CATEGORIES_URL"),
+				ExamScheduleUrl:     os.Getenv("EXAM_SCHEDULE_URL"),
 			},
 			FBConfig: FBConfig{
 				FBVerifyToken: os.Getenv("FB_VERIFY_TOKEN"),
@@ -139,6 +142,7 @@ func LoadConfigs(path string) (configs *Configs, err error) {
 			FithouUrl:           mapping.FithouUrl,
 			CtmsUrl:             mapping.CtmsUrl,
 			FithouCategoriesUrl: mapping.FithouCategoriesUrl,
+			ExamScheduleUrl:     mapping.ExamScheduleUrl,
 		},
 		FBConfig: FBConfig{
 			FBVerifyToken: mapping.FBVerifyToken,

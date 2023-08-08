@@ -23,6 +23,8 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
+	log.Info().Msgf("load configs success")
+
 	mongoClient, err := mongodb.NewMongoDBClient(configs)
 
 	if err != nil {

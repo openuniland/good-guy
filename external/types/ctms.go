@@ -6,8 +6,7 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Cookie    string `json:"cookie"`
-	IsSuccess bool   `json:"is_success"`
+	Cookie string `json:"cookie"`
 }
 
 type LogoutRequest struct {
@@ -22,8 +21,20 @@ type DailySchedule struct {
 	SerialNumber string `json:"serial_number"`
 	Time         string `json:"time"`
 	ClassRoom    string `json:"class_room"`
-	CourseName   string `json:"course_name"`
+	SubjectName  string `json:"subject_name"`
 	Lecturer     string `json:"lecturer"`
 	ClassCode    string `json:"class_code"`
 	Status       string `json:"status"`
+}
+
+type ExamSchedule struct {
+	SerialNumber string `json:"serial_number"`
+	Time         string `json:"time"`
+	ClassRoom    string `json:"class_room"`
+	SubjectName  string `json:"subject_name"`
+	ExamListCode string `json:"exam_list_code"`
+}
+
+type GetExamScheduleRequest struct {
+	Cookie string `json:"cookie" validate:"required"`
 }

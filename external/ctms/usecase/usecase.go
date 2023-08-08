@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -86,22 +87,15 @@ func (us *CtmsUS) Login(ctx context.Context, user *types.LoginRequest) (*types.L
 
 	if bytes.Contains(body, []byte("Xin chào mừng")) {
 		return &types.LoginResponse{
-			Cookie:    cookie,
-			IsSuccess: true,
+			Cookie: cookie,
 		}, nil
 	}
 
 	if bytes.Contains(body, []byte("Sai Tên đăng nhập hoặc Mật khẩu")) {
-		return &types.LoginResponse{
-			Cookie:    "",
-			IsSuccess: false,
-		}, nil
+		return nil, errors.New("wrong username or password")
 	}
 
-	return &types.LoginResponse{
-		Cookie:    "",
-		IsSuccess: false,
-	}, nil
+	return nil, errors.New("an unknown error")
 
 }
 
@@ -200,7 +194,7 @@ func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types
 	}
 
 	var dailyScheduleData []*types.DailySchedule
-	doc.Find("#leftcontent #LeftCol_Lichhoc1_pnView").ChildrenFiltered("div").Each(func(i int, s *goquery.Selection) {
+	doc.Find("#leftcontent #LeftCol_Lichhoc1_pnView").ChildrenFiltered("div").Each(func(_ int, s *goquery.Selection) {
 		day := s.First().Find("b").Text()
 
 		today := utils.TodayFormatted()
@@ -220,7 +214,7 @@ func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types
 						SerialNumber: strings.TrimSpace(ss.Find("td").Eq(0).Text()),
 						Time:         strings.TrimSpace(ss.Find("td").Eq(1).Text()),
 						ClassRoom:    strings.TrimSpace(ss.Find("td").Eq(2).Text()),
-						CourseName:   strings.TrimSpace(ss.Find("td").Eq(3).Text()),
+						SubjectName:  strings.TrimSpace(ss.Find("td").Eq(3).Text()),
 						Lecturer:     strings.TrimSpace(ss.Find("td").Eq(4).Text()),
 						ClassCode:    strings.TrimSpace(ss.Find("td").Eq(5).Text()),
 						Status:       strings.TrimSpace(ss.Find("td").Eq(6).Text()),
@@ -235,4 +229,87 @@ func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types
 	})
 
 	return dailyScheduleData, nil
+}
+
+func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]*types.ExamSchedule, error) {
+
+	examScheduleUrl := us.cfg.UrlCrawlerList.ExamScheduleUrl
+
+	// Create HTTP client
+	client := &http.Client{}
+
+	// Prepare the request
+	req, err := http.NewRequest("GET", examScheduleUrl, nil)
+	if err != nil {
+		log.Err(err).Msg("error create request to get exam schedule" + err.Error())
+		return nil, err
+	}
+	// Set request headers
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Cookie", cookie)
+	req.Header.Set("Origin", examScheduleUrl)
+	req.Header.Set("Referer", examScheduleUrl)
+	req.Header.Set("Upgrade-Insecure-Requests", "1")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
+	fmt.Println("examScheduleUrl", examScheduleUrl)
+	// Send the request
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Err(err).Msg("error send request to get exam schedule: " + err.Error())
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		log.Err(err).Msg("error parse response to get exam schedule" + err.Error())
+		return nil, err
+	}
+
+	NoPermissionText := doc.Find(".NoPermission h3").Text()
+	if strings.TrimSpace(NoPermissionText) == SESSION_EXPIRED_MESSAGE {
+
+		log.Error().Msg("session expired")
+		return nil, errors.New("session expired")
+	}
+
+	expiredNotiText := doc.Find("#leftcontent #thongbao").Text()
+	if strings.TrimSpace(expiredNotiText) == EXPIRED_CTMS {
+
+		log.Error().Msg("need to buy ctm")
+		return nil, errors.New("need to buy ctm")
+	}
+
+	var examScheduleData []*types.ExamSchedule
+	doc.Find(".RowEffect tbody tr").Each(func(i int, s *goquery.Selection) {
+		if i != 0 {
+			res := &types.ExamSchedule{
+				SerialNumber: strings.TrimSpace(s.Find("td").Eq(0).Text()),
+				Time:         strings.TrimSpace(s.Find("td").Eq(1).Text()),
+				ClassRoom:    strings.TrimSpace(s.Find("td").Eq(2).Text()),
+				SubjectName:  strings.TrimSpace(s.Find("td").Eq(3).Text()),
+				ExamListCode: strings.TrimSpace(s.Find("td").Eq(4).Text()),
+			}
+
+			examScheduleData = append(examScheduleData, res)
+		}
+	})
+
+	return examScheduleData, nil
+}
+
+func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.LoginRequest) ([]*types.ExamSchedule, error) {
+	cookie, err := us.Login(ctx, user)
+	if err != nil {
+		log.Err(err).Msg("error login to get upcoming exam schedule")
+		return nil, err
+	}
+
+	examSchedule, err := us.GetExamSchedule(ctx, cookie.Cookie)
+	if err != nil {
+		log.Err(err).Msg("error get exam schedule to get upcoming exam schedule")
+		return nil, err
+	}
+
+	return examSchedule, nil
 }
