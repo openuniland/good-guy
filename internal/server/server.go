@@ -3,20 +3,20 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/openuniland/good-guy/configs"
+	"github.com/openuniland/good-guy/pkg/db/mongodb"
 	utils "github.com/openuniland/good-guy/pkg/logger"
 	"github.com/rs/zerolog/log"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Server struct {
-	configs     *configs.Configs
-	router      *gin.Engine
-	mongoClient *mongo.Client
+	configs *configs.Configs
+	router  *gin.Engine
+	mongo   *mongodb.MongoDB
 }
 
-func NewServer(configs *configs.Configs, mongoClient *mongo.Client) (*Server, error) {
+func NewServer(configs *configs.Configs, mongo *mongodb.MongoDB) (*Server, error) {
 
-	server := &Server{configs: configs, mongoClient: mongoClient}
+	server := &Server{configs: configs, mongo: mongo}
 
 	return server, nil
 }

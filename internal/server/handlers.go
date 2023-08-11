@@ -28,9 +28,9 @@ func (server *Server) MapHandlers() {
 	router.Use(cors.AllowAll())
 
 	// Init repositories
-	articleRepo := articleRepo.NewArticleRepository(server.configs, server.mongoClient)
-	userRepo := userRepo.NewUserRepository(server.configs, server.mongoClient)
-	examSchedulesRepo := examSchedulesRepo.NewExamSchedulesRepository(server.configs, server.mongoClient)
+	articleRepo := articleRepo.NewArticleRepository(server.configs, server.mongo)
+	userRepo := userRepo.NewUserRepository(server.configs, server.mongo)
+	examSchedulesRepo := examSchedulesRepo.NewExamSchedulesRepository(server.configs, server.mongo)
 
 	// Init useCases
 	ctmsUC := ctmsUS.NewCtmsUseCase(server.configs)

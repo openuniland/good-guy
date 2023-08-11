@@ -7,6 +7,7 @@ import (
 	"github.com/openuniland/good-guy/configs"
 	article "github.com/openuniland/good-guy/internal/articles"
 	"github.com/openuniland/good-guy/internal/models"
+	"github.com/openuniland/good-guy/pkg/db/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,18 +17,18 @@ import (
 var collectionName = "test_articles"
 
 type articleRepo struct {
-	mongoClient *mongo.Client
-	cfg         *configs.Configs
+	mongodb *mongodb.MongoDB
+	cfg     *configs.Configs
 }
 
-func NewArticleRepository(cfg *configs.Configs, mongoClient *mongo.Client) article.Repository {
-	return &articleRepo{cfg: cfg, mongoClient: mongoClient}
+func NewArticleRepository(cfg *configs.Configs, mongodb *mongodb.MongoDB) article.Repository {
+	return &articleRepo{cfg: cfg, mongodb: mongodb}
 }
 
 func (a *articleRepo) Create(ctx context.Context, article *models.Article) (*mongo.InsertOneResult, error) {
 	dbName := a.cfg.MongoDB.MongoDBName
 
-	coll := a.mongoClient.Database(dbName).Collection(collectionName)
+	coll := a.mongodb.Client.Database(dbName).Collection(collectionName)
 
 	article.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 	res, err := coll.InsertOne(ctx, article)
@@ -41,7 +42,7 @@ func (a *articleRepo) Create(ctx context.Context, article *models.Article) (*mon
 func (a *articleRepo) Upsert(ctx context.Context, article *models.Article) (*mongo.UpdateResult, error) {
 	dbName := a.cfg.MongoDB.MongoDBName
 
-	coll := a.mongoClient.Database(dbName).Collection(collectionName)
+	coll := a.mongodb.Client.Database(dbName).Collection(collectionName)
 
 	filter := bson.M{"aid": article.Aid}
 	update := bson.M{
@@ -69,7 +70,7 @@ func (a *articleRepo) Upsert(ctx context.Context, article *models.Article) (*mon
 func (a *articleRepo) FindByAid(ctx context.Context, aid int) (*models.Article, error) {
 	dbName := a.cfg.MongoDB.MongoDBName
 
-	coll := a.mongoClient.Database(dbName).Collection(collectionName)
+	coll := a.mongodb.Client.Database(dbName).Collection(collectionName)
 
 	filter := bson.M{"aid": aid}
 	var article *models.Article
@@ -85,7 +86,7 @@ func (a *articleRepo) FindByAid(ctx context.Context, aid int) (*models.Article, 
 func (a *articleRepo) Find(ctx context.Context, filter interface{}) ([]*models.Article, error) {
 	dbName := a.cfg.MongoDB.MongoDBName
 
-	coll := a.mongoClient.Database(dbName).Collection(collectionName)
+	coll := a.mongodb.Client.Database(dbName).Collection(collectionName)
 
 	var articles []*models.Article
 
@@ -111,7 +112,7 @@ func (a *articleRepo) FindOne(ctx context.Context, filter interface{}) (*models.
 
 	dbName := a.cfg.MongoDB.MongoDBName
 
-	coll := a.mongoClient.Database(dbName).Collection(collectionName)
+	coll := a.mongodb.Client.Database(dbName).Collection(collectionName)
 
 	var article *models.Article
 
@@ -132,7 +133,7 @@ func (a *articleRepo) FindOne(ctx context.Context, filter interface{}) (*models.
 func (a *articleRepo) UpdateOne(ctx context.Context, filter interface{}, update interface{}) (*mongo.UpdateResult, error) {
 	dbName := a.cfg.MongoDB.MongoDBName
 
-	coll := a.mongoClient.Database(dbName).Collection(collectionName)
+	coll := a.mongodb.Client.Database(dbName).Collection(collectionName)
 
 	res, err := coll.UpdateOne(ctx, filter, update)
 	if err != nil {
@@ -145,7 +146,7 @@ func (a *articleRepo) UpdateOne(ctx context.Context, filter interface{}, update 
 func (a *articleRepo) FindOneAndUpdate(ctx context.Context, filter interface{}, update interface{}) (*models.Article, error) {
 	dbName := a.cfg.MongoDB.MongoDBName
 
-	coll := a.mongoClient.Database(dbName).Collection(collectionName)
+	coll := a.mongodb.Client.Database(dbName).Collection(collectionName)
 
 	var article *models.Article
 

@@ -7,6 +7,7 @@ import (
 	"github.com/openuniland/good-guy/configs"
 	examschedules "github.com/openuniland/good-guy/internal/exam_schedules"
 	"github.com/openuniland/good-guy/internal/models"
+	"github.com/openuniland/good-guy/pkg/db/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,18 +17,18 @@ import (
 var collectionName = "exam_schedules"
 
 type examSchedulesRepo struct {
-	mongoClient *mongo.Client
-	cfg         *configs.Configs
+	cfg     *configs.Configs
+	mongodb *mongodb.MongoDB
 }
 
-func NewExamSchedulesRepository(cfg *configs.Configs, mongoClient *mongo.Client) examschedules.Repository {
-	return &examSchedulesRepo{cfg: cfg, mongoClient: mongoClient}
+func NewExamSchedulesRepository(cfg *configs.Configs, mongodb *mongodb.MongoDB) examschedules.Repository {
+	return &examSchedulesRepo{cfg: cfg, mongodb: mongodb}
 }
 
 func (e *examSchedulesRepo) Create(ctx context.Context, examSchedules *models.ExamSchedules) (*mongo.InsertOneResult, error) {
 	dbName := e.cfg.MongoDB.MongoDBName
 
-	coll := e.mongoClient.Database(dbName).Collection(collectionName)
+	coll := e.mongodb.Client.Database(dbName).Collection(collectionName)
 
 	examSchedules.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 	res, err := coll.InsertOne(ctx, examSchedules)
@@ -42,7 +43,7 @@ func (e *examSchedulesRepo) Create(ctx context.Context, examSchedules *models.Ex
 func (e *examSchedulesRepo) Find(ctx context.Context, filter interface{}) ([]*models.ExamSchedules, error) {
 	dbName := e.cfg.MongoDB.MongoDBName
 
-	coll := e.mongoClient.Database(dbName).Collection(collectionName)
+	coll := e.mongodb.Client.Database(dbName).Collection(collectionName)
 
 	var examSchedules []*models.ExamSchedules
 
@@ -68,7 +69,7 @@ func (e *examSchedulesRepo) FindOne(ctx context.Context, filter interface{}) (*m
 
 	dbName := e.cfg.MongoDB.MongoDBName
 
-	coll := e.mongoClient.Database(dbName).Collection(collectionName)
+	coll := e.mongodb.Client.Database(dbName).Collection(collectionName)
 
 	var examSchedules *models.ExamSchedules
 
@@ -86,7 +87,7 @@ func (e *examSchedulesRepo) FindOne(ctx context.Context, filter interface{}) (*m
 func (e *examSchedulesRepo) FindOneAndUpdate(ctx context.Context, filter interface{}, update interface{}) (*models.ExamSchedules, error) {
 	dbName := e.cfg.MongoDB.MongoDBName
 
-	coll := e.mongoClient.Database(dbName).Collection(collectionName)
+	coll := e.mongodb.Client.Database(dbName).Collection(collectionName)
 
 	var examSchedules *models.ExamSchedules
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/openuniland/good-guy/pkg/db/mongodb"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func main() {
@@ -25,19 +23,19 @@ func main() {
 
 	log.Info().Msgf("load configs success")
 
-	mongoClient, err := mongodb.NewMongoDBClient(configs)
+	mongo, err := mongodb.NewMongoDB(configs)
 
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create mongodb client")
 	}
-	defer mongoClient.Disconnect(context.Background())
+	defer mongo.Close()
 
-	runGinServer(configs, mongoClient)
+	runGinServer(configs, mongo)
 
 }
 
-func runGinServer(config *configs.Configs, mongoClient *mongo.Client) {
-	server, err := server.NewServer(config, mongoClient)
+func runGinServer(config *configs.Configs, mongo *mongodb.MongoDB) {
+	server, err := server.NewServer(config, mongo)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create server")
 	}
