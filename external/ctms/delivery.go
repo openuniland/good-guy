@@ -9,4 +9,5 @@ type Handlers interface {
 	Logout() gin.HandlerFunc
 	GetDailySchedule() gin.HandlerFunc
 	GetExamSchedule() gin.HandlerFunc
+	GetUpcomingExamSchedule() gin.HandlerFunc
 }

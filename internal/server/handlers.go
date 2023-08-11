@@ -33,12 +33,12 @@ func (server *Server) MapHandlers() {
 	examSchedulesRepo := examSchedulesRepo.NewExamSchedulesRepository(server.configs, server.mongo)
 
 	// Init useCases
-	ctmsUC := ctmsUS.NewCtmsUseCase(server.configs)
 	fithouUS := fithouUS.NewFithouUseCase(server.configs)
 	articleUS := articleUS.NewArticleUseCase(server.configs, articleRepo, fithouUS)
 	facebookUS := facebookUS.NewFacebookUseCase(server.configs)
 	userUS := userUS.NewUserUseCase(server.configs, userRepo)
 	examSchedulesUS := examSchedulesUS.NewExamSchedulesUseCase(server.configs, examSchedulesRepo)
+	ctmsUC := ctmsUS.NewCtmsUseCase(server.configs, examSchedulesUS)
 
 	// Init handlers
 	authHandlers := ctmsHttp.NewCtmsHandlers(server.configs, ctmsUC)
@@ -49,7 +49,7 @@ func (server *Server) MapHandlers() {
 	examSchedulesHandlers := examSchedulesHttp.NewExamSchedulesHandlers(server.configs, examSchedulesUS)
 
 	// Jobs
-	jobs := jobs.NewJobs(server.configs, articleUS, userUS, facebookUS)
+	jobs := jobs.NewJobs(server.configs, articleUS, userUS, facebookUS, ctmsUC)
 	jobs.Run()
 
 	// Init routes

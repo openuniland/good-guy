@@ -9,5 +9,6 @@ func MapCtmsRoutes(ctmsGroup *gin.RouterGroup, h ctms.Handlers) {
 	ctmsGroup.POST("/login", h.Login())
 	ctmsGroup.POST("/logout", h.Logout())
 	ctmsGroup.POST("/daily-schedules", h.GetDailySchedule())
-	ctmsGroup.GET("/exam-schedules", h.GetExamSchedule())
+	ctmsGroup.POST("/exam-schedules", h.GetExamSchedule())
+	ctmsGroup.POST("/upcoming-exam-schedules", h.GetUpcomingExamSchedule())
 }

@@ -16,8 +16,10 @@ import (
 	"github.com/openuniland/good-guy/configs"
 	"github.com/openuniland/good-guy/external/ctms"
 	"github.com/openuniland/good-guy/external/types"
+	examschedules "github.com/openuniland/good-guy/internal/exam_schedules"
 	"github.com/openuniland/good-guy/pkg/utils"
 	"github.com/rs/zerolog/log"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 const loginUrl = "/login.aspx"
@@ -27,11 +29,12 @@ const EXPIRED_CTMS = "Từ 2/2022, hãy thực hiện theo thông báo này đ�
 const SESSION_EXPIRED_MESSAGE = "Phiên làm việc hết hạn hoặc Bạn không có quyền truy cập chức năng này"
 
 type CtmsUS struct {
-	cfg *configs.Configs
+	cfg             *configs.Configs
+	examschedulesUS examschedules.UseCase
 }
 
-func NewCtmsUseCase(cfg *configs.Configs) ctms.UseCase {
-	return &CtmsUS{cfg: cfg}
+func NewCtmsUseCase(cfg *configs.Configs, examschedulesUS examschedules.UseCase) ctms.UseCase {
+	return &CtmsUS{cfg: cfg, examschedulesUS: examschedulesUS}
 }
 
 func (us *CtmsUS) Login(ctx context.Context, user *types.LoginRequest) (*types.LoginResponse, error) {
@@ -310,6 +313,16 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 		log.Err(err).Msg("error get exam schedule to get upcoming exam schedule")
 		return nil, err
 	}
+
+	filter := bson.D{{"username", user.Username}}
+
+	res, err := us.examschedulesUS.FindExamSchedulesByUsername(ctx, filter)
+	if err != nil {
+		log.Err(err).Msg("error find exam schedule by username to get upcoming exam schedule")
+		return nil, err
+	}
+
+	fmt.Println("res", res)
 
 	return examSchedule, nil
 }

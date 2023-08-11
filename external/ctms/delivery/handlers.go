@@ -156,3 +156,38 @@ func (c *ctmsHandlers) GetExamSchedule() gin.HandlerFunc {
 		})
 	}
 }
+
+func (c *ctmsHandlers) GetUpcomingExamSchedule() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		req := &types.LoginRequest{}
+
+		if err := ctx.ShouldBindJSON(req); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		err := utils.ValidateStruct(ctx, req)
+
+		if err != nil {
+			errors := utils.ShowErrors(err)
+			ctx.JSON(http.StatusBadRequest, errors)
+			return
+		}
+
+		data, err := c.ctmsUC.GetUpcomingExamSchedule(ctx, req)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+				"data":    data,
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "success",
+			"data":    data,
+		})
+	}
+}

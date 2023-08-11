@@ -39,6 +39,16 @@ func (e *ExamSchedulesUS) FindExamSchedules(ctx context.Context) ([]*models.Exam
 	return examSchedules, nil
 }
 
+func (e *ExamSchedulesUS) FindExamSchedulesByUsername(ctx context.Context, filter interface{}) (*models.ExamSchedules, error) {
+
+	examSchedules, err := e.examschedulesRepo.FindOne(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return examSchedules, nil
+}
+
 func (e *ExamSchedulesUS) UpdateExamSchedulesByUsername(ctx context.Context, filter interface{}, examSchedules *models.ExamSchedules) (*models.ExamSchedules, error) {
 
 	examSchedules, err := e.examschedulesRepo.FindOneAndUpdate(ctx, filter, examSchedules)

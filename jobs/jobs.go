@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"github.com/openuniland/good-guy/configs"
+	"github.com/openuniland/good-guy/external/ctms"
 	"github.com/openuniland/good-guy/external/facebook"
 	"github.com/openuniland/good-guy/internal/articles"
 	"github.com/openuniland/good-guy/internal/users"
@@ -13,10 +14,11 @@ type Jobs struct {
 	articleUC  articles.UseCase
 	userUC     users.UseCase
 	facebookUC facebook.UseCase
+	ctmsUS     ctms.UseCase
 }
 
-func NewJobs(cfg *configs.Configs, articleUC articles.UseCase, userUC users.UseCase, facebookUC facebook.UseCase) *Jobs {
-	return &Jobs{cfg: cfg, articleUC: articleUC, userUC: userUC, facebookUC: facebookUC}
+func NewJobs(cfg *configs.Configs, articleUC articles.UseCase, userUC users.UseCase, facebookUC facebook.UseCase, ctmsUS ctms.UseCase) *Jobs {
+	return &Jobs{cfg: cfg, articleUC: articleUC, userUC: userUC, facebookUC: facebookUC, ctmsUS: ctmsUS}
 }
 
 func (j *Jobs) Run() {
