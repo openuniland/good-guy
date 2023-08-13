@@ -314,7 +314,7 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 		return nil, err
 	}
 
-	filter := bson.D{{"username", user.Username}}
+	filter := bson.M{"username": user.Username}
 
 	res, err := us.examschedulesUS.FindExamSchedulesByUsername(ctx, filter)
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	examschedules "github.com/openuniland/good-guy/internal/exam_schedules"
 	"github.com/openuniland/good-guy/internal/models"
 	"github.com/openuniland/good-guy/pkg/db/mongodb"
+	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -22,6 +23,33 @@ type examSchedulesRepo struct {
 }
 
 func NewExamSchedulesRepository(cfg *configs.Configs, mongodb *mongodb.MongoDB) examschedules.Repository {
+
+	if err := mongodb.DB.CreateCollection(context.Background(), collectionName); err != nil {
+		log.Warn().Err(err).Msg("collection already exists: " + collectionName)
+	}
+	coll := mongodb.DB.Collection(collectionName)
+	indexModels := []mongo.IndexModel{
+		{
+			Keys: bson.M{
+				"username": 1,
+			},
+			Options: options.Index().SetUnique(true),
+		},
+		{
+			Keys: bson.M{
+				"subjects": 1,
+			},
+			Options: options.Index().SetUnique(false),
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := coll.Indexes().CreateMany(ctx, indexModels)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to create indexes: " + collectionName)
+	}
 	return &examSchedulesRepo{cfg: cfg, mongodb: mongodb}
 }
 
