@@ -19,7 +19,6 @@ import (
 	examschedules "github.com/openuniland/good-guy/internal/exam_schedules"
 	"github.com/openuniland/good-guy/pkg/utils"
 	"github.com/rs/zerolog/log"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 const loginUrl = "/login.aspx"
@@ -234,7 +233,7 @@ func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types
 	return dailyScheduleData, nil
 }
 
-func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]*types.ExamSchedule, error) {
+func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.ExamSchedule, error) {
 
 	examScheduleUrl := us.cfg.UrlCrawlerList.ExamScheduleUrl
 
@@ -283,10 +282,10 @@ func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]*types.
 		return nil, errors.New("need to buy ctm")
 	}
 
-	var examScheduleData []*types.ExamSchedule
+	var examScheduleData []types.ExamSchedule
 	doc.Find(".RowEffect tbody tr").Each(func(i int, s *goquery.Selection) {
 		if i != 0 {
-			res := &types.ExamSchedule{
+			res := types.ExamSchedule{
 				SerialNumber: strings.TrimSpace(s.Find("td").Eq(0).Text()),
 				Time:         strings.TrimSpace(s.Find("td").Eq(1).Text()),
 				ClassRoom:    strings.TrimSpace(s.Find("td").Eq(2).Text()),
@@ -301,7 +300,7 @@ func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]*types.
 	return examScheduleData, nil
 }
 
-func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.LoginRequest) ([]*types.ExamSchedule, error) {
+func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.LoginRequest) ([]types.ExamSchedule, error) {
 	cookie, err := us.Login(ctx, user)
 	if err != nil {
 		log.Err(err).Msg("error login to get upcoming exam schedule")
@@ -314,15 +313,13 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 		return nil, err
 	}
 
-	filter := bson.M{"username": user.Username}
+	var upcomingExamSchedule []types.ExamSchedule
 
-	res, err := us.examschedulesUS.FindExamSchedulesByUsername(ctx, filter)
-	if err != nil {
-		log.Err(err).Msg("error find exam schedule by username to get upcoming exam schedule")
-		return nil, err
+	for i := 0; i <= len(examSchedule)-1; i++ {
+		if utils.IsTomorrow(examSchedule[i].Time) {
+			upcomingExamSchedule = append(upcomingExamSchedule, examSchedule[i])
+		}
 	}
 
-	fmt.Println("res", res)
-
-	return examSchedule, nil
+	return upcomingExamSchedule, nil
 }

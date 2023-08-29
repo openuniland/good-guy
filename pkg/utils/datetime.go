@@ -3,6 +3,8 @@ package utils
 import (
 	"fmt"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 func FormatDateTimeToGetDailySchedule() string {
@@ -32,4 +34,18 @@ func TodayFormatted() string {
 
 	date := ddStr + "/" + mmStr + "/" + fmt.Sprintf("%d", yyyy)
 	return date
+}
+
+func IsTomorrow(dateString string) bool {
+	layout := "15:04 02/01/2006"
+	t, err := time.Parse(layout, dateString)
+	if err != nil {
+		log.Error().Msgf("Error parsing date string: %s", dateString)
+		return false
+	}
+
+	now := time.Now()
+	tomorrow := now.Add(24 * time.Hour)
+
+	return t.Year() == tomorrow.Year() && t.YearDay() == tomorrow.YearDay()
 }
