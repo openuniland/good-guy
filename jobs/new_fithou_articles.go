@@ -30,7 +30,10 @@ func (j *Jobs) SyncArticles() {
 		go func(user *models.User) {
 			for _, article := range res.Data {
 				log.Info().Msg("Send message to user: " + user.SubscribedID)
-				message := "📰 " + article.Title + "\n\n" + "\n\n" + article.Link + "\n\n	"
+
+				link := j.cfg.UrlCrawlerList.FithouUrl + article.Link
+
+				message := "📰 " + article.Title + "\n\n" + link + "\n\n	"
 				err := j.facebookUC.SendTextMessage(context.Background(), user.SubscribedID, message)
 				if err != nil {
 					log.Error().Err(err).Msg("SyncArticles")

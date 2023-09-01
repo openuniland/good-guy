@@ -39,3 +39,15 @@ type FacebookWebhookRequest struct {
 		} `json:"messaging"`
 	} `json:"entry"`
 }
+
+type QuickReply struct {
+	ContentType string `json:"content_type"`
+	Title       string `json:"title"`
+	Payload     string `json:"payload"`
+	ImageUrl    string `json:"image_url"`
+}
+
+type SendQuickRepliesRequest struct {
+	Text         string       `json:"text" validate:"required"`
+	QuickReplies []QuickReply `json:"quick_replies" validate:"required"`
+}

@@ -9,4 +9,5 @@ type Handlers interface {
 	SendButtonMessage() gin.HandlerFunc
 	VerifyFacebookWebhook() gin.HandlerFunc
 	HandleFacebookWebhook() gin.HandlerFunc
+	SendQuickReplies() gin.HandlerFunc
 }

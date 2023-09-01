@@ -137,3 +137,36 @@ func (f *facebookHandlers) HandleFacebookWebhook() gin.HandlerFunc {
 
 	}
 }
+
+func (f *facebookHandlers) SendQuickReplies() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id := ctx.Param("id")
+
+		var req *types.SendQuickRepliesRequest
+
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		err := utils.ValidateStruct(ctx, req)
+
+		if err != nil {
+			errors := utils.ShowErrors(err)
+			ctx.JSON(http.StatusBadRequest, errors)
+			return
+		}
+
+		err = f.facebookUC.SendQuickReplies(ctx, id, req.Text, &req.QuickReplies)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, "OK")
+	}
+}

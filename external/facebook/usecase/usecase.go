@@ -64,6 +64,49 @@ func (us *FacebookUS) SendMessage(ctx context.Context, id string, message interf
 	return nil
 }
 
+func (us *FacebookUS) SendQuickReplies(ctx context.Context, id string, message string, quickReplies *[]types.QuickReply) error {
+	data := map[string]interface{}{
+		"recipient": map[string]string{
+			"id": id,
+		},
+		"message": map[string]interface{}{
+			"text":          message,
+			"quick_replies": quickReplies,
+		},
+		"messaging_type": "RESPONSE",
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		log.Error().Err(err).Msg("error marshal data")
+		return err
+	}
+
+	url := fmt.Sprintf("https://graph.facebook.com/v14.0/me/messages?access_token=%s", us.cfg.FBConfig.FBVerifyToken)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Error().Err(err).Msg("error create new request")
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error().Err(err).Msg("error send request")
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Error().Err(err).Msg("error response from Facebook API")
+		return errors.New("error response from Facebook API")
+	}
+
+	return nil
+}
+
 func (us *FacebookUS) SendTextMessage(ctx context.Context, id string, text string) error {
 	message := map[string]string{
 		"text": text,

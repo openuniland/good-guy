@@ -25,9 +25,19 @@ func (j *Jobs) Run() {
 
 	c := cron.New(cron.WithSeconds())
 
+	//every 5 seconds
+	c.AddFunc("*/5 * * * * *", func() {
+		//go j.getUpcomingExamSchedule()
+	})
+
 	//every 25 minutes
 	c.AddFunc("*/25 * * * *", func() {
 		go j.SyncArticles()
+	})
+
+	//20h every day
+	c.AddFunc("0 20 * * *", func() {
+		go j.getUpcomingExamSchedule()
 	})
 
 	c.Start()

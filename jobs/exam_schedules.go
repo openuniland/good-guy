@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/openuniland/good-guy/external/types"
 	"github.com/openuniland/good-guy/internal/models"
@@ -19,27 +18,17 @@ func (j *Jobs) getUpcomingExamSchedule() {
 	for _, user := range users {
 		go func(user *models.User) {
 
-			var u types.LoginRequest
-			u.Username = user.Username
-			u.Password = user.Password
-
-			upcoming, err := j.ctmsUS.GetUpcomingExamSchedule(context.Background(), &u)
+			u := &types.LoginRequest{
+				Username: user.Username,
+				Password: user.Password,
+			}
+			err := j.ctmsUS.SendChangedExamScheduleAndNewExamScheduleToUser(context.Background(), u, user.SubscribedID)
 			if err != nil {
-				log.Error().Err(err).Msg("SyncArticles")
+				log.Error().Err(err).Msg("[JOBS - getUpcomingExamSchedule]" + " - " + user.Username)
 				return
 			}
-			fmt.Println(upcoming)
 
-			// if len(upcoming) == 0 {
-			// 	return
-			// }
-
-			message := "	"
-			err = j.facebookUC.SendTextMessage(context.Background(), user.SubscribedID, message)
-			if err != nil {
-				log.Error().Err(err).Msg("SyncArticles")
-				return
-			}
+			log.Info().Msg("[JOBS - getUpcomingExamSchedule]" + " - " + user.Username)
 
 		}(user)
 	}
