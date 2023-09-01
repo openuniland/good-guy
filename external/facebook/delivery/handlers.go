@@ -94,50 +94,6 @@ func (f *facebookHandlers) SendButtonMessage() gin.HandlerFunc {
 	}
 }
 
-func (f *facebookHandlers) VerifyFacebookWebhook() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		token := ctx.Query("hub.verify_token")
-		challenge := ctx.Query("hub.challenge")
-
-		res, err := f.facebookUC.VerifyFacebookWebhook(ctx, token, challenge)
-
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "Forbidden",
-			})
-			return
-		}
-
-		ctx.JSON(http.StatusOK, res)
-
-	}
-}
-
-func (f *facebookHandlers) HandleFacebookWebhook() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var message *types.FacebookWebhookRequest
-
-		if err := ctx.ShouldBindJSON(&message); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
-			})
-			return
-		}
-
-		err := f.facebookUC.HandleFacebookWebhook(ctx, message)
-
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
-			})
-			return
-		}
-
-		ctx.JSON(http.StatusOK, "EVENT_RECEIVED")
-
-	}
-}
-
 func (f *facebookHandlers) SendQuickReplies() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id := ctx.Param("id")

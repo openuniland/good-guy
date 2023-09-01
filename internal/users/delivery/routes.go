@@ -8,4 +8,5 @@ import (
 func MapUserRoutes(userGroup *gin.RouterGroup, h users.Handlers) {
 	userGroup.POST("", h.CreateNewUser())
 	userGroup.GET("", h.GetUsers())
+	userGroup.GET("/:subscribed_id", h.GetUserBySubscribedId())
 }

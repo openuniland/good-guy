@@ -10,4 +10,5 @@ import (
 type UseCase interface {
 	CreateNewUser(ctx context.Context, user *models.User) (*mongo.InsertOneResult, error)
 	GetUsers(ctx context.Context) ([]*models.User, error)
+	GetUserBySubscribedId(ctx context.Context, subscribedId string) (*models.User, error)
 }

@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var collectionName = "test_users"
@@ -26,7 +27,20 @@ func NewUserRepository(cfg *configs.Configs, mongodb *mongodb.MongoDB) users.Rep
 		log.Warn().Err(err).Msg("collection already exists: " + collectionName)
 	}
 	coll := mongodb.DB.Collection(collectionName)
-	indexModels := []mongo.IndexModel{}
+	indexModels := []mongo.IndexModel{
+		{
+			Keys: bson.M{
+				"username": 1,
+			},
+			Options: options.Index().SetUnique(true),
+		},
+		{
+			Keys: bson.M{
+				"subscribed_id": 1,
+			},
+			Options: options.Index().SetUnique(true),
+		},
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -90,4 +104,17 @@ func (u *userRepo) Find(ctx context.Context, filter interface{}) ([]*models.User
 	}
 
 	return users, nil
+}
+
+func (u *userRepo) FindOneUserByCondition(ctx context.Context, filter interface{}) (*models.User, error) {
+	dbName := u.cfg.MongoDB.MongoDBName
+
+	coll := u.mongodb.Client.Database(dbName).Collection(collectionName)
+
+	singleResult := coll.FindOne(ctx, filter)
+
+	var user *models.User
+	singleResult.Decode(&user)
+
+	return user, nil
 }

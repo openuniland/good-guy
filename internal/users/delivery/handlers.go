@@ -70,3 +70,22 @@ func (u *userHandlers) GetUsers() gin.HandlerFunc {
 		})
 	}
 }
+
+func (u *userHandlers) GetUserBySubscribedId() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		subscribedId := ctx.Param("subscribed_id")
+
+		user, err := u.userUC.GetUserBySubscribedId(ctx, subscribedId)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "user found",
+			"data":    user,
+		})
+	}
+}

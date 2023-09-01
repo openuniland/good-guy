@@ -7,6 +7,7 @@ import (
 	"github.com/openuniland/good-guy/internal/models"
 	"github.com/openuniland/good-guy/internal/users"
 	"github.com/rs/zerolog/log"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -38,4 +39,15 @@ func (u *UserUS) GetUsers(ctx context.Context) ([]*models.User, error) {
 	}
 
 	return users, nil
+}
+
+func (u *UserUS) GetUserBySubscribedId(ctx context.Context, subscribedId string) (*models.User, error) {
+	filter := bson.M{"subscribed_id": subscribedId}
+	user, err := u.userRepo.FindOneUserByCondition(ctx, filter)
+	if err != nil {
+		log.Error().Err(err).Msg("error getting user by subscribed id")
+		return nil, err
+	}
+
+	return user, nil
 }

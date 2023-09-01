@@ -11,7 +11,6 @@ import (
 	"github.com/openuniland/good-guy/configs"
 	"github.com/openuniland/good-guy/external/facebook"
 	"github.com/openuniland/good-guy/external/types"
-	utils "github.com/openuniland/good-guy/pkg/utils"
 	"github.com/rs/zerolog/log"
 )
 
@@ -156,79 +155,4 @@ func (us *FacebookUS) SendButtonMessage(ctx context.Context, id string, input *t
 	}
 
 	return us.SendMessage(ctx, id, message)
-}
-
-func (us *FacebookUS) VerifyFacebookWebhook(ctx context.Context, token, challenge string) (string, error) {
-	if token == us.cfg.FBConfig.FBVerifyToken {
-		return challenge, nil
-	}
-
-	return "", errors.New("error verify token")
-}
-
-func (us *FacebookUS) HandleFacebookWebhook(ctx context.Context, data *types.FacebookWebhookRequest) error {
-	messaging := data.Entry[0].Messaging
-
-	for _, message := range messaging {
-		sender := message.Sender
-		postback := message.Postback
-		msg := message.Message
-
-		id := sender.ID
-
-		if postback.Payload != "" {
-			switch postback.Payload {
-			case "GET_STARTED":
-				us.SendTextMessage(ctx, id, "Chào mừng bạn đến với Fithou BOT. Chúc bạn có một trải nghiệm zui zẻ :D. /help để biết thêm chi tiết!")
-				return nil
-			case "HELP":
-				us.SendTextMessage(ctx, id, utils.HelpScript())
-				return nil
-			case "CTMS_SERVICE":
-				// TODO: send quick reply
-				return nil
-			case "FITHOU_CRAWL_SERVICE":
-				// TODO: send quick reply
-				return nil
-			case "CTMS_CREDITS_SERVICE":
-				// TODO: send quick reply
-				return nil
-			case "CTMS_TIMETABLE_SERVICE":
-				// TODO: send quick reply
-				return nil
-			default:
-				return nil
-			}
-		} else if msg.QuickReply.Payload != "" {
-			switch msg.QuickReply.Payload {
-			case "ADD_CTMS_ACCOUNT":
-				// TODO: send btn login
-				return nil
-			case "REMOVE_CTMS_ACCOUNT":
-				// TODO: send btn remove
-				return nil
-			case "ADD_FITHOU_CRAWL_SERVICE":
-				// TODO: subscribe fithou notification
-				return nil
-			case "REMOVE_FITHOU_CRAWL_SERVICE":
-				// TODO: unsubscribe fithou notification
-				return nil
-			case "ADD_CTMS_CREDITS_SERVICE":
-				//
-				return nil
-			case "REMOVE_CTMS_CREDITS_SERVICE":
-				return nil
-			case "ADD_CTMS_TIMETABLE_SERVICE":
-				return nil
-			case "REMOVE_CTMS_TIMETABLE_SERVICE":
-				return nil
-			default:
-				return nil
-			}
-		} else if msg.Text != "" {
-			utils.ChatScript(id, msg.Text)
-
-		}
-	}
-	return nil
 }
