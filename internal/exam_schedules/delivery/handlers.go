@@ -93,8 +93,12 @@ func (e *examSchedulesHandlers) UpdateExamSchedulesByUsername() gin.HandlerFunc 
 		}
 
 		filter := bson.M{"username": examSchedules.Username}
+		update := bson.M{
+			"username": examSchedules.Username,
+			"subjects": examSchedules.Subjects,
+		}
 
-		res, err := e.examschedulesUS.UpdateExamSchedulesByUsername(ctx, filter, examSchedules)
+		res, err := e.examschedulesUS.UpdateExamSchedulesByUsername(ctx, filter, update)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),

@@ -11,4 +11,5 @@ func MapCtmsRoutes(ctmsGroup *gin.RouterGroup, h ctms.Handlers) {
 	ctmsGroup.POST("/daily-schedules", h.GetDailySchedule())
 	ctmsGroup.POST("/exam-schedules", h.GetExamSchedule())
 	ctmsGroup.POST("/upcoming-exam-schedules", h.GetUpcomingExamSchedule())
+	ctmsGroup.POST("/exam-schedules/:id", h.SendChangedExamScheduleAndNewExamScheduleToUser())
 }

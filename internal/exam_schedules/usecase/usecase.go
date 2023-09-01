@@ -49,9 +49,9 @@ func (e *ExamSchedulesUS) FindExamSchedulesByUsername(ctx context.Context, filte
 	return examSchedules, nil
 }
 
-func (e *ExamSchedulesUS) UpdateExamSchedulesByUsername(ctx context.Context, filter interface{}, examSchedules *models.ExamSchedules) (*models.ExamSchedules, error) {
+func (e *ExamSchedulesUS) UpdateExamSchedulesByUsername(ctx context.Context, filter interface{}, update bson.M) (*models.ExamSchedules, error) {
 
-	examSchedules, err := e.examschedulesRepo.FindOneAndUpdate(ctx, filter, examSchedules)
+	examSchedules, err := e.examschedulesRepo.FindOneAndUpdate(ctx, filter, update)
 
 	if err != nil {
 		return nil, err

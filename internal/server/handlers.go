@@ -38,7 +38,7 @@ func (server *Server) MapHandlers() {
 	facebookUS := facebookUS.NewFacebookUseCase(server.configs)
 	userUS := userUS.NewUserUseCase(server.configs, userRepo)
 	examSchedulesUS := examSchedulesUS.NewExamSchedulesUseCase(server.configs, examSchedulesRepo)
-	ctmsUC := ctmsUS.NewCtmsUseCase(server.configs, examSchedulesUS)
+	ctmsUC := ctmsUS.NewCtmsUseCase(server.configs, examSchedulesUS, facebookUS)
 
 	// Init handlers
 	authHandlers := ctmsHttp.NewCtmsHandlers(server.configs, ctmsUC)

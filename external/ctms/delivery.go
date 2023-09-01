@@ -10,4 +10,5 @@ type Handlers interface {
 	GetDailySchedule() gin.HandlerFunc
 	GetExamSchedule() gin.HandlerFunc
 	GetUpcomingExamSchedule() gin.HandlerFunc
+	SendChangedExamScheduleAndNewExamScheduleToUser() gin.HandlerFunc
 }

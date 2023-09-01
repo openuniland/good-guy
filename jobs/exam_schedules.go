@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/openuniland/good-guy/external/types"
 	"github.com/openuniland/good-guy/internal/models"
@@ -27,10 +28,11 @@ func (j *Jobs) getUpcomingExamSchedule() {
 				log.Error().Err(err).Msg("SyncArticles")
 				return
 			}
+			fmt.Println(upcoming)
 
-			if len(upcoming) == 0 {
-				return
-			}
+			// if len(upcoming) == 0 {
+			// 	return
+			// }
 
 			message := "	"
 			err = j.facebookUC.SendTextMessage(context.Background(), user.SubscribedID, message)

@@ -38,3 +38,8 @@ type ExamSchedule struct {
 type GetExamScheduleRequest struct {
 	Cookie string `json:"cookie" validate:"required"`
 }
+
+type GetUpcomingExamScheduleResponse struct {
+	CurrentExamsSchedules []ExamSchedule `json:"current_exams_schedule"`
+	OldExamsSchedules     []ExamSchedule `json:"old_exams_schedule"`
+}

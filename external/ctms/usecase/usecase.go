@@ -6,7 +6,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -15,10 +14,12 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/openuniland/good-guy/configs"
 	"github.com/openuniland/good-guy/external/ctms"
+	"github.com/openuniland/good-guy/external/facebook"
 	"github.com/openuniland/good-guy/external/types"
 	examschedules "github.com/openuniland/good-guy/internal/exam_schedules"
 	"github.com/openuniland/good-guy/pkg/utils"
 	"github.com/rs/zerolog/log"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 const loginUrl = "/login.aspx"
@@ -30,10 +31,11 @@ const SESSION_EXPIRED_MESSAGE = "Phiên làm việc hết hạn hoặc Bạn kh�
 type CtmsUS struct {
 	cfg             *configs.Configs
 	examschedulesUS examschedules.UseCase
+	facebookUS      facebook.UseCase
 }
 
-func NewCtmsUseCase(cfg *configs.Configs, examschedulesUS examschedules.UseCase) ctms.UseCase {
-	return &CtmsUS{cfg: cfg, examschedulesUS: examschedulesUS}
+func NewCtmsUseCase(cfg *configs.Configs, examschedulesUS examschedules.UseCase, facebookUS facebook.UseCase) ctms.UseCase {
+	return &CtmsUS{cfg: cfg, examschedulesUS: examschedulesUS, facebookUS: facebookUS}
 }
 
 func (us *CtmsUS) Login(ctx context.Context, user *types.LoginRequest) (*types.LoginResponse, error) {
@@ -253,7 +255,6 @@ func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.E
 	req.Header.Set("Referer", examScheduleUrl)
 	req.Header.Set("Upgrade-Insecure-Requests", "1")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
-	fmt.Println("examScheduleUrl", examScheduleUrl)
 	// Send the request
 	resp, err := client.Do(req)
 	if err != nil {
@@ -300,26 +301,109 @@ func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.E
 	return examScheduleData, nil
 }
 
-func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.LoginRequest) ([]types.ExamSchedule, error) {
+func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.LoginRequest) (types.GetUpcomingExamScheduleResponse, error) {
 	cookie, err := us.Login(ctx, user)
 	if err != nil {
 		log.Err(err).Msg("error login to get upcoming exam schedule")
-		return nil, err
+		return types.GetUpcomingExamScheduleResponse{}, err
 	}
 
-	examSchedule, err := us.GetExamSchedule(ctx, cookie.Cookie)
+	currentExamsSchedule, err := us.GetExamSchedule(ctx, cookie.Cookie)
 	if err != nil {
 		log.Err(err).Msg("error get exam schedule to get upcoming exam schedule")
-		return nil, err
+		return types.GetUpcomingExamScheduleResponse{}, err
 	}
 
-	var upcomingExamSchedule []types.ExamSchedule
+	filter := bson.M{
+		"username": user.Username,
+	}
 
-	for i := 0; i <= len(examSchedule)-1; i++ {
-		if utils.IsTomorrow(examSchedule[i].Time) {
-			upcomingExamSchedule = append(upcomingExamSchedule, examSchedule[i])
+	oldExamSchedule, err := us.examschedulesUS.FindExamSchedulesByUsername(ctx, filter)
+	if err != nil {
+		log.Err(err).Msg("error get exam schedule to get upcoming exam schedule")
+		return types.GetUpcomingExamScheduleResponse{}, err
+	}
+
+	if oldExamSchedule == nil {
+		return types.GetUpcomingExamScheduleResponse{
+			CurrentExamsSchedules: currentExamsSchedule,
+			OldExamsSchedules:     nil,
+		}, nil
+	}
+
+	return types.GetUpcomingExamScheduleResponse{
+		CurrentExamsSchedules: currentExamsSchedule,
+		OldExamsSchedules:     oldExamSchedule.Subjects,
+	}, nil
+}
+
+func (us *CtmsUS) SendChangedExamScheduleAndNewExamScheduleToUser(ctx context.Context, user *types.LoginRequest, id string) error {
+
+	data, err := us.GetUpcomingExamSchedule(ctx, user)
+	if err != nil {
+		log.Err(err).Msg("error get upcoming exam schedule to send to user")
+		return err
+	}
+
+	go func() {
+		filter := bson.M{
+			"username": user.Username,
 		}
+		update := bson.M{
+			"subjects": data.CurrentExamsSchedules,
+		}
+		us.examschedulesUS.UpdateExamSchedulesByUsername(ctx, filter, update)
+	}()
+
+	if data.OldExamsSchedules == nil {
+
+		for i := 0; i <= len(data.CurrentExamsSchedules)-1; i++ {
+			go func(idx int) {
+				us.facebookUS.SendTextMessage(ctx, id, utils.ExamScheduleMessage("Bạn có lịch thi 🥰", data.CurrentExamsSchedules[idx]))
+			}(i)
+		}
+
+		return nil
 	}
 
-	return upcomingExamSchedule, nil
+	for i := 0; i <= len(data.CurrentExamsSchedules)-1; i++ {
+		go func(idx int) {
+			// check if new exam schedule
+			newExamSchedule := true
+			// check if exam schedule room changed
+			isExamScheduleRoomChanged := false
+			// check if exam schedule time changed
+			isExamScheduleTimeChanged := false
+			for _, examSchedule := range data.OldExamsSchedules {
+				if utils.IsExamScheduleExisted(examSchedule, data.CurrentExamsSchedules[idx]) {
+					newExamSchedule = false
+				}
+			}
+
+			for _, examSchedule := range data.OldExamsSchedules {
+				if utils.IsExamScheduleRoomChanged(examSchedule, data.CurrentExamsSchedules[idx]) {
+					isExamScheduleRoomChanged = true
+				}
+			}
+
+			for _, examSchedule := range data.OldExamsSchedules {
+				if utils.IsExamScheduleTimeChanged(examSchedule, data.CurrentExamsSchedules[idx]) {
+					isExamScheduleTimeChanged = true
+				}
+			}
+
+			if isExamScheduleRoomChanged {
+				go us.facebookUS.SendTextMessage(ctx, id, utils.ExamScheduleMessage("Phòng thi của bạn đã thay đổi 😭", data.CurrentExamsSchedules[idx]))
+			}
+
+			if isExamScheduleTimeChanged {
+				go us.facebookUS.SendTextMessage(ctx, id, utils.ExamScheduleMessage("Lịch thi của bạn đã thay đổi 😭", data.CurrentExamsSchedules[idx]))
+			}
+
+			if newExamSchedule {
+				go us.facebookUS.SendTextMessage(ctx, id, utils.ExamScheduleMessage("Bạn có lịch thi mới 🥰", data.CurrentExamsSchedules[idx]))
+			}
+		}(i)
+	}
+	return nil
 }
