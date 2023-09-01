@@ -377,18 +377,14 @@ func (us *CtmsUS) SendChangedExamScheduleAndNewExamScheduleToUser(ctx context.Co
 			for _, examSchedule := range data.OldExamsSchedules {
 				if utils.IsExamScheduleExisted(examSchedule, data.CurrentExamsSchedules[idx]) {
 					newExamSchedule = false
-				}
-			}
 
-			for _, examSchedule := range data.OldExamsSchedules {
-				if utils.IsExamScheduleRoomChanged(examSchedule, data.CurrentExamsSchedules[idx]) {
-					isExamScheduleRoomChanged = true
-				}
-			}
+					if utils.IsExamScheduleRoomChanged(examSchedule, data.CurrentExamsSchedules[idx]) {
+						isExamScheduleRoomChanged = true
+					}
 
-			for _, examSchedule := range data.OldExamsSchedules {
-				if utils.IsExamScheduleTimeChanged(examSchedule, data.CurrentExamsSchedules[idx]) {
-					isExamScheduleTimeChanged = true
+					if utils.IsExamScheduleTimeChanged(examSchedule, data.CurrentExamsSchedules[idx]) {
+						isExamScheduleTimeChanged = true
+					}
 				}
 			}
 
