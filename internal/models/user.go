@@ -6,7 +6,7 @@ type User struct {
 	Id                  primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Username            string             `bson:"username" json:"username" validate:"required"`
 	Password            string             `bson:"password" json:"password" validate:"required"`
-	SubscribedID        string             `bson:"subscribed_id" json:"subscribed_id"`
+	SubscribedID        string             `bson:"subscribed_id" json:"subscribed_id" validate:"required"`
 	SubjectHTML         string             `bson:"subject_html" json:"subject_html"`
 	IsSubscribedSubject bool               `bson:"is_subscribed_subject" json:"is_subscribed_subject"`
 	IsTrackTimetable    bool               `bson:"is_track_timetable" json:"is_track_timetable"`

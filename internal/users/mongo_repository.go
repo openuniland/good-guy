@@ -12,4 +12,6 @@ type Repository interface {
 	GetUsers(ctx context.Context) ([]*models.User, error)
 	Find(ctx context.Context, filter interface{}) ([]*models.User, error)
 	FindOneUserByCondition(ctx context.Context, filter interface{}) (*models.User, error)
+	FindOneAndUpdate(ctx context.Context, filter interface{}, update interface{}) (*models.User, error)
+	FindOneAndDelete(ctx context.Context, filter interface{}) *mongo.SingleResult
 }

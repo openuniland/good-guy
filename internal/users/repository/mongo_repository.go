@@ -118,3 +118,34 @@ func (u *userRepo) FindOneUserByCondition(ctx context.Context, filter interface{
 
 	return user, nil
 }
+
+func (u *userRepo) FindOneAndUpdate(ctx context.Context, filter interface{}, update interface{}) (*models.User, error) {
+	dbName := u.cfg.MongoDB.MongoDBName
+
+	coll := u.mongodb.Client.Database(dbName).Collection(collectionName)
+
+	var user *models.User
+
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+
+	updateDoc := bson.M{
+		"$set": update,
+	}
+
+	err := coll.FindOneAndUpdate(ctx, filter, updateDoc, opts).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (u *userRepo) FindOneAndDelete(ctx context.Context, filter interface{}) *mongo.SingleResult {
+	dbName := u.cfg.MongoDB.MongoDBName
+
+	coll := u.mongodb.Client.Database(dbName).Collection(collectionName)
+
+	res := coll.FindOneAndDelete(ctx, filter)
+
+	return res
+}

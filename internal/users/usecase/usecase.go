@@ -51,3 +51,35 @@ func (u *UserUS) GetUserBySubscribedId(ctx context.Context, subscribedId string)
 
 	return user, nil
 }
+
+func (u *UserUS) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
+	filter := bson.M{"username": username}
+
+	user, err := u.userRepo.FindOneUserByCondition(ctx, filter)
+	if err != nil {
+		log.Error().Err(err).Msg("error getting user by username")
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (u *UserUS) FindOneAndUpdateUser(ctx context.Context, filter, update interface{}) (*models.User, error) {
+	res, err := u.userRepo.FindOneAndUpdate(ctx, filter, update)
+	if err != nil {
+		log.Error().Err(err).Msg("error updating user")
+		return nil, err
+	}
+
+	log.Info().Msg("user updated")
+
+	return res, nil
+}
+
+func (u *UserUS) FindOneAndDeleteUser(ctx context.Context, filter interface{}) (*mongo.SingleResult, error) {
+	res := u.userRepo.FindOneAndDelete(ctx, filter)
+
+	log.Info().Msg("user deleted")
+
+	return res, nil
+}
