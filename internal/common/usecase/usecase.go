@@ -6,19 +6,48 @@ import (
 
 	"github.com/openuniland/good-guy/configs"
 	"github.com/openuniland/good-guy/constants"
+	"github.com/openuniland/good-guy/external/ctms"
 	"github.com/openuniland/good-guy/external/facebook"
 	"github.com/openuniland/good-guy/external/types"
 	"github.com/openuniland/good-guy/internal/common"
+	"github.com/openuniland/good-guy/internal/users"
 	"github.com/openuniland/good-guy/pkg/utils"
+	"github.com/rs/zerolog/log"
 )
 
 type CommonUS struct {
 	cfg        *configs.Configs
 	facebookUS facebook.UseCase
+	ctmsUC     ctms.UseCase
+	userUC     users.UseCase
 }
 
-func NewCommonUseCase(cfg *configs.Configs, facebookUS facebook.UseCase) common.UseCase {
-	return &CommonUS{cfg: cfg, facebookUS: facebookUS}
+func NewCommonUseCase(cfg *configs.Configs, facebookUS facebook.UseCase, ctmsUC ctms.UseCase, userUC users.UseCase) common.UseCase {
+	return &CommonUS{cfg: cfg, facebookUS: facebookUS, ctmsUC: ctmsUC, userUC: userUC}
+}
+
+func (us *CommonUS) SendLoginCtmsButton(ctx context.Context, id string) error {
+	user, err := us.userUC.GetUserBySubscribedId(ctx, id)
+	if err != nil {
+		log.Error().Err(err).Msg("error get user by subscribed id")
+		return err
+	}
+
+	if user != nil {
+		us.facebookUS.SendTextMessage(ctx, id, "Bạn đã đăng nhập CTMS rồi!")
+		return nil
+	}
+
+	input := &types.SendButtonMessageRequest{
+		ImageUrl: constants.IMAGE_URL_LOGIN_CTMS_BTN,
+		Title:    "Đăng nhập CTMS",
+		Url:      us.cfg.Server.Host + "?id=" + id,
+		Subtitle: "Đăng nhập để nhận thông báo từ CTMS",
+		BtnText:  "Đăng nhập",
+	}
+
+	us.facebookUS.SendButtonMessage(ctx, id, input)
+	return nil
 }
 
 func (us *CommonUS) VerifyFacebookWebhook(ctx context.Context, token, challenge string) (string, error) {

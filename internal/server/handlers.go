@@ -1,6 +1,8 @@
 package server
 
 import (
+	"html/template"
+
 	"github.com/gin-gonic/gin"
 	ctmsHttp "github.com/openuniland/good-guy/external/ctms/delivery"
 	facebookHttp "github.com/openuniland/good-guy/external/facebook/delivery"
@@ -10,6 +12,7 @@ import (
 	examSchedulesHttp "github.com/openuniland/good-guy/internal/exam_schedules/delivery"
 	userHttp "github.com/openuniland/good-guy/internal/users/delivery"
 	"github.com/openuniland/good-guy/jobs"
+	"github.com/openuniland/good-guy/pkg/frameworks"
 
 	ctmsUS "github.com/openuniland/good-guy/external/ctms/usecase"
 	facebookUS "github.com/openuniland/good-guy/external/facebook/usecase"
@@ -29,6 +32,9 @@ func (server *Server) MapHandlers() {
 	router := gin.Default()
 	router.Use(cors.AllowAll())
 
+	router.LoadHTMLGlob("pkg/frameworks/web/*")
+	router.Static("/static", "./static")
+
 	// Init repositories
 	articleRepo := articleRepo.NewArticleRepository(server.configs, server.mongo)
 	userRepo := userRepo.NewUserRepository(server.configs, server.mongo)
@@ -41,7 +47,7 @@ func (server *Server) MapHandlers() {
 	userUS := userUS.NewUserUseCase(server.configs, userRepo)
 	examSchedulesUS := examSchedulesUS.NewExamSchedulesUseCase(server.configs, examSchedulesRepo)
 	ctmsUC := ctmsUS.NewCtmsUseCase(server.configs, examSchedulesUS, facebookUS)
-	commonUC := commonUC.NewCommonUseCase(server.configs, facebookUS)
+	commonUC := commonUC.NewCommonUseCase(server.configs, facebookUS, ctmsUC, userUS)
 
 	// Init handlers
 	authHandlers := ctmsHttp.NewCtmsHandlers(server.configs, ctmsUC)
@@ -55,6 +61,42 @@ func (server *Server) MapHandlers() {
 	// Jobs
 	jobs := jobs.NewJobs(server.configs, articleUS, userUS, facebookUS, ctmsUC)
 	jobs.Run()
+
+	// Init web
+	router.GET("/", func(c *gin.Context) {
+		ts, err := template.ParseFiles(frameworks.VIEWS.Home)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"message": "Error",
+			})
+			return
+		}
+
+		ts.Execute(c.Writer, nil)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"message": "Error",
+			})
+			return
+		}
+	})
+	router.GET("/privacy-policy", func(c *gin.Context) {
+		ts, err := template.ParseFiles(frameworks.VIEWS.PrivacyPolicy)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"message": "Error",
+			})
+			return
+		}
+
+		ts.Execute(c.Writer, nil)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"message": "Error",
+			})
+			return
+		}
+	})
 
 	// Init routes
 	v1 := router.Group("/v1")

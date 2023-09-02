@@ -9,4 +9,5 @@ import (
 type UseCase interface {
 	VerifyFacebookWebhook(ctx context.Context, token, challenge string) (string, error)
 	HandleFacebookWebhook(ctx context.Context, data *types.FacebookWebhookRequest) error
+	SendLoginCtmsButton(ctx context.Context, id string) error
 }
