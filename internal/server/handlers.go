@@ -8,6 +8,7 @@ import (
 	facebookHttp "github.com/openuniland/good-guy/external/facebook/delivery"
 	fithouHttp "github.com/openuniland/good-guy/external/fithou/delivery"
 	articleHttp "github.com/openuniland/good-guy/internal/articles/delivery"
+	authHttp "github.com/openuniland/good-guy/internal/auth/delivery"
 	commonHttp "github.com/openuniland/good-guy/internal/common/delivery"
 	examSchedulesHttp "github.com/openuniland/good-guy/internal/exam_schedules/delivery"
 	userHttp "github.com/openuniland/good-guy/internal/users/delivery"
@@ -18,6 +19,7 @@ import (
 	facebookUS "github.com/openuniland/good-guy/external/facebook/usecase"
 	fithouUS "github.com/openuniland/good-guy/external/fithou/usecase"
 	articleUS "github.com/openuniland/good-guy/internal/articles/usecase"
+	authUC "github.com/openuniland/good-guy/internal/auth/usecase"
 	commonUC "github.com/openuniland/good-guy/internal/common/usecase"
 	examSchedulesUS "github.com/openuniland/good-guy/internal/exam_schedules/usecase"
 	userUS "github.com/openuniland/good-guy/internal/users/usecase"
@@ -47,15 +49,17 @@ func (server *Server) MapHandlers() {
 	userUS := userUS.NewUserUseCase(server.configs, userRepo)
 	examSchedulesUS := examSchedulesUS.NewExamSchedulesUseCase(server.configs, examSchedulesRepo)
 	ctmsUC := ctmsUS.NewCtmsUseCase(server.configs, examSchedulesUS, facebookUS)
+	authUC := authUC.NewAuthUseCase(server.configs)
 	commonUC := commonUC.NewCommonUseCase(server.configs, facebookUS, ctmsUC, userUS)
 
 	// Init handlers
-	authHandlers := ctmsHttp.NewCtmsHandlers(server.configs, ctmsUC)
+	authCtmsHandlers := ctmsHttp.NewCtmsHandlers(server.configs, ctmsUC)
 	articleHandlers := articleHttp.NewArticleHandlers(server.configs, articleUS)
 	fithouHandlers := fithouHttp.NewFithouHandlers(server.configs, fithouUS)
 	facebookHandlers := facebookHttp.NewFacebookHandlers(server.configs, facebookUS)
 	userHandlers := userHttp.NewArticleHandlers(server.configs, userUS)
 	examSchedulesHandlers := examSchedulesHttp.NewExamSchedulesHandlers(server.configs, examSchedulesUS)
+	authHandlers := authHttp.NewCtmsHandlers(server.configs, authUC)
 	commonHandlers := commonHttp.NewCommonHandlers(server.configs, commonUC)
 
 	// Jobs
@@ -108,6 +112,7 @@ func (server *Server) MapHandlers() {
 	facebook := v1.Group("/facebook")
 	users := v1.Group("/users")
 	examSchedules := v1.Group("/exam-schedules")
+	auth := v1.Group("/auth")
 	common := v1.Group("/common")
 
 	health.GET("/ping", func(ctx *gin.Context) {
@@ -117,13 +122,14 @@ func (server *Server) MapHandlers() {
 	})
 
 	// Map routes
-	ctmsHttp.MapCtmsRoutes(ctms, authHandlers)
+	ctmsHttp.MapCtmsRoutes(ctms, authCtmsHandlers)
 	articleHttp.MapArticleRoutes(articles, articleHandlers)
 	fithouHttp.MapFithouRoutes(fithou, fithouHandlers)
 	facebookHttp.MapFacebookRoutes(facebook, facebookHandlers)
 	userHttp.MapUserRoutes(users, userHandlers)
 	examSchedulesHttp.MapExamSchedulesRoutes(examSchedules, examSchedulesHandlers)
 	commonHttp.MapCommonRoutes(common, commonHandlers)
+	authHttp.MapAuthRoutes(auth, authHandlers)
 
 	server.router = router
 }

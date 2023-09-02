@@ -38,7 +38,7 @@ func NewCtmsUseCase(cfg *configs.Configs, examschedulesUS examschedules.UseCase,
 	return &CtmsUS{cfg: cfg, examschedulesUS: examschedulesUS, facebookUS: facebookUS}
 }
 
-func (us *CtmsUS) Login(ctx context.Context, user *types.LoginRequest) (*types.LoginResponse, error) {
+func (us *CtmsUS) LoginCtms(ctx context.Context, user *types.LoginCtmsRequest) (*types.LoginCtmsResponse, error) {
 
 	ctmsUrl := us.cfg.UrlCrawlerList.CtmsUrl
 
@@ -90,7 +90,7 @@ func (us *CtmsUS) Login(ctx context.Context, user *types.LoginRequest) (*types.L
 	cookie := resp.Header.Get("Set-Cookie")
 
 	if bytes.Contains(body, []byte("Xin chào mừng")) {
-		return &types.LoginResponse{
+		return &types.LoginCtmsResponse{
 			Cookie: cookie,
 		}, nil
 	}
@@ -103,7 +103,7 @@ func (us *CtmsUS) Login(ctx context.Context, user *types.LoginRequest) (*types.L
 
 }
 
-func (us *CtmsUS) Logout(ctx context.Context, cookie string) error {
+func (us *CtmsUS) LogoutCtms(ctx context.Context, cookie string) error {
 	ctmsUrl := us.cfg.UrlCrawlerList.CtmsUrl
 
 	data := url.Values{
@@ -301,8 +301,8 @@ func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.E
 	return examScheduleData, nil
 }
 
-func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.LoginRequest) (types.GetUpcomingExamScheduleResponse, error) {
-	cookie, err := us.Login(ctx, user)
+func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.LoginCtmsRequest) (types.GetUpcomingExamScheduleResponse, error) {
+	cookie, err := us.LoginCtms(ctx, user)
 	if err != nil {
 		log.Err(err).Msg("error login to get upcoming exam schedule")
 		return types.GetUpcomingExamScheduleResponse{}, err
@@ -337,7 +337,7 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 	}, nil
 }
 
-func (us *CtmsUS) SendChangedExamScheduleAndNewExamScheduleToUser(ctx context.Context, user *types.LoginRequest, id string) error {
+func (us *CtmsUS) SendChangedExamScheduleAndNewExamScheduleToUser(ctx context.Context, user *types.LoginCtmsRequest, id string) error {
 
 	data, err := us.GetUpcomingExamSchedule(ctx, user)
 	if err != nil {

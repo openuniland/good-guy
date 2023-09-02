@@ -18,7 +18,7 @@ func (j *Jobs) getUpcomingExamSchedule() {
 	for _, user := range users {
 		go func(user *models.User) {
 
-			u := &types.LoginRequest{
+			u := &types.LoginCtmsRequest{
 				Username: user.Username,
 				Password: user.Password,
 			}

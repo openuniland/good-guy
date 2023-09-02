@@ -22,9 +22,9 @@ func NewCtmsHandlers(cfg *configs.Configs, ctmsUC ctms.UseCase) ctms.Handlers {
 	}
 }
 
-func (c *ctmsHandlers) Login() gin.HandlerFunc {
+func (c *ctmsHandlers) LoginCtms() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user := &types.LoginRequest{}
+		user := &types.LoginCtmsRequest{}
 
 		if err := ctx.ShouldBindJSON(user); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
@@ -41,7 +41,7 @@ func (c *ctmsHandlers) Login() gin.HandlerFunc {
 			return
 		}
 
-		cookie, err := c.ctmsUC.Login(ctx, user)
+		cookie, err := c.ctmsUC.LoginCtms(ctx, user)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
@@ -54,9 +54,9 @@ func (c *ctmsHandlers) Login() gin.HandlerFunc {
 		})
 	}
 }
-func (c *ctmsHandlers) Logout() gin.HandlerFunc {
+func (c *ctmsHandlers) LogoutCtms() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		req := &types.LogoutRequest{}
+		req := &types.LogoutCtmsRequest{}
 
 		if err := ctx.ShouldBindJSON(req); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
@@ -73,7 +73,7 @@ func (c *ctmsHandlers) Logout() gin.HandlerFunc {
 			return
 		}
 
-		err = c.ctmsUC.Logout(ctx, req.Cookie)
+		err = c.ctmsUC.LogoutCtms(ctx, req.Cookie)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
@@ -159,7 +159,7 @@ func (c *ctmsHandlers) GetExamSchedule() gin.HandlerFunc {
 
 func (c *ctmsHandlers) GetUpcomingExamSchedule() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		req := &types.LoginRequest{}
+		req := &types.LoginCtmsRequest{}
 
 		if err := ctx.ShouldBindJSON(req); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
@@ -194,7 +194,7 @@ func (c *ctmsHandlers) GetUpcomingExamSchedule() gin.HandlerFunc {
 
 func (c *ctmsHandlers) SendChangedExamScheduleAndNewExamScheduleToUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		req := &types.LoginRequest{}
+		req := &types.LoginCtmsRequest{}
 		id := ctx.Param("id")
 
 		if err := ctx.ShouldBindJSON(req); err != nil {

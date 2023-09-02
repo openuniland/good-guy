@@ -5,8 +5,8 @@ import (
 )
 
 type Handlers interface {
-	Login() gin.HandlerFunc
-	Logout() gin.HandlerFunc
+	LoginCtms() gin.HandlerFunc
+	LogoutCtms() gin.HandlerFunc
 	GetDailySchedule() gin.HandlerFunc
 	GetExamSchedule() gin.HandlerFunc
 	GetUpcomingExamSchedule() gin.HandlerFunc
