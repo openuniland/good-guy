@@ -33,7 +33,7 @@ func (j *Jobs) SyncArticles() {
 
 				link := j.cfg.UrlCrawlerList.FithouUrl + article.Link
 
-				message := "📰 " + article.Title + "\n\n" + link + "\n\n	"
+				message := "📰 " + article.Title + "\n\n" + link + "\n\n"
 				err := j.facebookUC.SendTextMessage(context.Background(), user.SubscribedID, message)
 				if err != nil {
 					log.Error().Err(err).Msg("SyncArticles")

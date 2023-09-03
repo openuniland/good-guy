@@ -124,9 +124,6 @@ func (a *articleRepo) FindOne(ctx context.Context, filter interface{}) (*models.
 		return nil, err
 	}
 
-	// TODO: remove this
-	article.SubscribedIDs = append(article.SubscribedIDs, "5611397915547076")
-
 	return article, nil
 }
 

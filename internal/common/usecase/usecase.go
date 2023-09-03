@@ -9,10 +9,12 @@ import (
 	"github.com/openuniland/good-guy/external/ctms"
 	"github.com/openuniland/good-guy/external/facebook"
 	"github.com/openuniland/good-guy/external/types"
+	"github.com/openuniland/good-guy/internal/articles"
 	"github.com/openuniland/good-guy/internal/common"
 	"github.com/openuniland/good-guy/internal/users"
 	"github.com/openuniland/good-guy/pkg/utils"
 	"github.com/rs/zerolog/log"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type CommonUS struct {
@@ -20,10 +22,164 @@ type CommonUS struct {
 	facebookUS facebook.UseCase
 	ctmsUC     ctms.UseCase
 	userUC     users.UseCase
+	articleUC  articles.UseCase
 }
 
-func NewCommonUseCase(cfg *configs.Configs, facebookUS facebook.UseCase, ctmsUC ctms.UseCase, userUC users.UseCase) common.UseCase {
-	return &CommonUS{cfg: cfg, facebookUS: facebookUS, ctmsUC: ctmsUC, userUC: userUC}
+func NewCommonUseCase(cfg *configs.Configs, facebookUS facebook.UseCase, ctmsUC ctms.UseCase, userUC users.UseCase, articleUC articles.UseCase) common.UseCase {
+	return &CommonUS{cfg: cfg, facebookUS: facebookUS, ctmsUC: ctmsUC, userUC: userUC, articleUC: articleUC}
+}
+
+func (us *CommonUS) GetNotificationOfExamSchedule(ctx context.Context, id string) error {
+	filter := bson.M{"subscribed_id": id}
+	update := bson.M{"is_exam_day": true}
+
+	user, err := us.userUC.FindOneAndUpdateUser(ctx, filter, update)
+	if err != nil {
+		log.Error().Err(err).Msg("error find one and update user")
+		return err
+	}
+
+	if user.IsTrackTimetable {
+		us.facebookUS.SendTextMessage(ctx, id, "🔔 Bật chức năng thông báo lịch thi thành công!")
+		return nil
+	}
+
+	if user == nil {
+		us.facebookUS.SendTextMessage(ctx, id, "❗️ Bạn chưa thêm tài khoản CTMS vào hệ thống.")
+		return nil
+	}
+
+	return nil
+}
+
+func (us *CommonUS) CancelGetNotificationOfExamSchedule(ctx context.Context, id string) error {
+	filter := bson.M{"subscribed_id": id}
+	update := bson.M{"is_exam_day": false}
+
+	user, err := us.userUC.FindOneAndUpdateUser(ctx, filter, update)
+	if err != nil {
+		log.Error().Err(err).Msg("error find one and update user")
+		return err
+	}
+
+	if !user.IsTrackTimetable {
+		us.facebookUS.SendTextMessage(ctx, id, "🔕 Đã tắt chức năng thông báo lịch thi!")
+		return nil
+	}
+
+	if user == nil {
+		us.facebookUS.SendTextMessage(ctx, id, "❗️ Bạn chưa thêm tài khoản CTMS vào hệ thống.")
+		return nil
+	}
+
+	return nil
+}
+
+func (us *CommonUS) AddCtmsTimetableService(ctx context.Context, id string) error {
+
+	filter := bson.M{"subscribed_id": id}
+	update := bson.M{"is_track_timetable": true}
+
+	user, err := us.userUC.FindOneAndUpdateUser(ctx, filter, update)
+	if err != nil {
+		log.Error().Err(err).Msg("error find one and update user")
+		return err
+	}
+
+	if user.IsTrackTimetable {
+		us.facebookUS.SendTextMessage(ctx, id, "🔔 Bật chức năng thông báo lịch học hàng ngày thành công!")
+		return nil
+	}
+
+	if user == nil {
+		us.facebookUS.SendTextMessage(ctx, id, "❗️ Bạn chưa thêm tài khoản CTMS vào hệ thống.")
+		return nil
+	}
+
+	return nil
+
+}
+
+func (us *CommonUS) RemoveCtmsTimetableService(ctx context.Context, id string) error {
+
+	filter := bson.M{"subscribed_id": id}
+	update := bson.M{"is_track_timetable": false}
+
+	user, err := us.userUC.FindOneAndUpdateUser(ctx, filter, update)
+	if err != nil {
+		log.Error().Err(err).Msg("error find one and update user")
+		return err
+	}
+
+	if !user.IsTrackTimetable {
+		us.facebookUS.SendTextMessage(ctx, id, "🔕 Đã tắt chức năng thông báo lịch học hàng ngày!")
+		return nil
+	}
+
+	if user == nil {
+		us.facebookUS.SendTextMessage(ctx, id, "❗️ Bạn chưa thêm tài khoản CTMS vào hệ thống.")
+		return nil
+	}
+
+	return nil
+
+}
+
+func (us *CommonUS) AddFithouCrawlService(ctx context.Context, id string) error {
+	article, err := us.articleUC.FindOne(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("error find one article")
+		return err
+	}
+
+	for _, item := range article.SubscribedIDs {
+		if item == id {
+			us.facebookUS.SendTextMessage(ctx, id, "Bạn đã đăng ký nhận thông báo từ FITHOU rồi!")
+			return nil
+		}
+	}
+
+	err = us.articleUC.AddNewSubscriber(ctx, id)
+	if err != nil {
+		log.Error().Err(err).Msg("error add new subscriber")
+		return err
+	}
+
+	go us.facebookUS.SendTextMessage(ctx, id, "Đăng ký nhận thông báo từ FITHOU thành công!")
+
+	link := us.cfg.UrlCrawlerList.FithouUrl + article.Link
+	message := "📰 " + article.Title + "\n\n" + link + "\n\n"
+	go us.facebookUS.SendTextMessage(ctx, id, "Gửi bạn bài viết mới nhất hiện tại. Bot sẽ câp nhật thông báo khi có bài viết mới."+"\n"+message)
+
+	return nil
+}
+
+func (us *CommonUS) RemoveFithouCrawlService(ctx context.Context, id string) error {
+
+	err := us.articleUC.RemoveSubscriber(ctx, id)
+	if err != nil {
+		log.Error().Err(err).Msg("error remove subscriber")
+		return err
+	}
+
+	us.facebookUS.SendTextMessage(ctx, id, "Hủy nhận thông báo từ FITHOU thành công!")
+
+	return nil
+}
+
+func (us *CommonUS) RemoveUser(ctx context.Context, id string) error {
+	filter := bson.M{"subscribed_id": id}
+
+	_, err := us.userUC.FindOneAndDeleteUser(ctx, filter)
+
+	if err != nil {
+		log.Error().Err(err).Msg("error remove user")
+		return err
+	}
+
+	us.facebookUS.SendTextMessage(ctx, id, "Đã xóa tài khoản CTMS thành công!")
+	log.Info().Msg("[success]" + "-" + "[remove user]" + "-" + "[" + id + "]")
+	return nil
 }
 
 func (us *CommonUS) SendLoginCtmsButton(ctx context.Context, id string) error {
@@ -56,6 +212,30 @@ func (us *CommonUS) VerifyFacebookWebhook(ctx context.Context, token, challenge 
 	}
 
 	return "", errors.New("error verify token")
+}
+
+func (us *CommonUS) ChatScript(ctx context.Context, id string, msg string) {
+	switch msg {
+	case utils.Command.Login:
+		us.SendLoginCtmsButton(ctx, id)
+		return
+	case utils.Command.Remove:
+		us.RemoveUser(ctx, id)
+		return
+	case utils.Command.Help:
+		us.facebookUS.SendTextMessage(ctx, id, utils.Command.Help)
+		return
+	case utils.Command.Examday:
+		us.GetNotificationOfExamSchedule(ctx, id)
+		return
+	case utils.Command.UnExamday:
+		us.CancelGetNotificationOfExamSchedule(ctx, id)
+		return
+	default:
+		us.facebookUS.SendTextMessage(ctx, id, "Bot ngu ngok quá, không hiểu gì hết :(. "+"\n"+" /help để biết thêm chi tiết!")
+		return
+	}
+
 }
 
 func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.FacebookWebhookRequest) error {
@@ -134,31 +314,34 @@ func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.Faceb
 		} else if msg.QuickReply.Payload != "" {
 			switch msg.QuickReply.Payload {
 			case "ADD_CTMS_ACCOUNT":
-				// TODO: send btn login
+				us.SendLoginCtmsButton(ctx, id)
 				return nil
 			case "REMOVE_CTMS_ACCOUNT":
-				// TODO: send btn remove
+				us.RemoveUser(ctx, id)
 				return nil
 			case "ADD_FITHOU_CRAWL_SERVICE":
-				// TODO: subscribe fithou notification
+				us.AddFithouCrawlService(ctx, id)
 				return nil
 			case "REMOVE_FITHOU_CRAWL_SERVICE":
-				// TODO: unsubscribe fithou notification
+				us.RemoveFithouCrawlService(ctx, id)
 				return nil
 			case "ADD_CTMS_CREDITS_SERVICE":
-				//
+				us.facebookUS.SendTextMessage(ctx, id, "Chức năng dành cho quản trị viên!")
 				return nil
 			case "REMOVE_CTMS_CREDITS_SERVICE":
+				us.facebookUS.SendTextMessage(ctx, id, "Chức năng dành cho quản trị viên!")
 				return nil
 			case "ADD_CTMS_TIMETABLE_SERVICE":
+				us.AddCtmsTimetableService(ctx, id)
 				return nil
 			case "REMOVE_CTMS_TIMETABLE_SERVICE":
+				us.RemoveCtmsTimetableService(ctx, id)
 				return nil
 			default:
 				return nil
 			}
 		} else if msg.Text != "" {
-			utils.ChatScript(id, msg.Text)
+			us.ChatScript(ctx, id, msg.Text)
 
 		}
 	}

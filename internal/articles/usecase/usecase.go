@@ -95,3 +95,64 @@ func (a *ArticleUS) UpdatedWithNewArticle(ctx context.Context) (*types.UpdatedWi
 		IsNew: true,
 	}, nil
 }
+
+func (a *ArticleUS) AddNewSubscriber(ctx context.Context, id string) error {
+	article, err := a.articleRepo.FindOne(ctx, bson.D{})
+	if err != nil {
+		log.Error().Err(err).Msg("error while fetching articles")
+		return err
+	}
+
+	for _, item := range article.SubscribedIDs {
+		if item == id {
+			return nil
+		}
+	}
+
+	subscriberArr := append(article.SubscribedIDs, id)
+
+	filter := bson.M{
+		"_id": article.Id,
+	}
+	update := bson.M{
+		"subscribed_ids": subscriberArr,
+	}
+	_, err = a.articleRepo.FindOneAndUpdate(ctx, filter, update)
+	if err != nil {
+		log.Error().Err(err).Msg("error while fetching articles")
+		return err
+	}
+
+	return nil
+}
+
+func (a *ArticleUS) RemoveSubscriber(ctx context.Context, id string) error {
+	article, err := a.articleRepo.FindOne(ctx, bson.D{})
+	if err != nil {
+		log.Error().Err(err).Msg("error while fetching articles")
+		return err
+	}
+
+	subscriberArr := article.SubscribedIDs
+
+	for i, item := range subscriberArr {
+		if item == id {
+			subscriberArr = append(subscriberArr[:i], subscriberArr[i+1:]...)
+			break
+		}
+	}
+
+	filter := bson.M{
+		"_id": article.Id,
+	}
+	update := bson.M{
+		"subscribed_ids": subscriberArr,
+	}
+	_, err = a.articleRepo.FindOneAndUpdate(ctx, filter, update)
+	if err != nil {
+		log.Error().Err(err).Msg("error while fetching articles")
+		return err
+	}
+
+	return nil
+}

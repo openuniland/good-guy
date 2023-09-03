@@ -10,4 +10,6 @@ import (
 type UseCase interface {
 	FindOne(ctx context.Context) (*models.Article, error)
 	UpdatedWithNewArticle(ctx context.Context) (*types.UpdatedWithNewArticleResponse, error)
+	AddNewSubscriber(ctx context.Context, id string) error
+	RemoveSubscriber(ctx context.Context, id string) error
 }
