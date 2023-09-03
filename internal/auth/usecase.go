@@ -7,5 +7,5 @@ import (
 )
 
 type UseCase interface {
-	Login(ctx context.Context, loginRequest *models.LoginRequest, id string) error
+	Login(ctx context.Context, loginRequest *models.LoginRequest) error
 }

@@ -25,14 +25,6 @@ func NewCtmsHandlers(cfg *configs.Configs, authUC auth.UseCase) auth.Handlers {
 func (a *authHandlers) Login() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		req := &models.LoginRequest{}
-		id := ctx.Query("id")
-
-		if id == "" {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "id is required",
-			})
-			return
-		}
 
 		if err := ctx.ShouldBindJSON(req); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
@@ -49,7 +41,7 @@ func (a *authHandlers) Login() gin.HandlerFunc {
 			return
 		}
 
-		err = a.authUC.Login(ctx, req, id)
+		err = a.authUC.Login(ctx, req)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),

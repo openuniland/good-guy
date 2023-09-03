@@ -42,7 +42,8 @@
           }),
         });
         const data = await response.json();
-        if (data.data.isSuccess) {
+        console.log('data', data);
+        if (data?.message === 'OK') {
           $('#msg').classList.remove('text-red-500');
           $('#msg').classList.add('text-green-500');
           $('#username').disabled = true;
@@ -54,11 +55,12 @@
             function success() {},
             function error(err) {
               // an error occurred
+              console.log("Can't close browser", err);
             }
           );
           window.top.close();
         } else {
-          $('#msg').textContent = data.data.errorMsg;
+          $('#msg').textContent = data.message;
         }
       }
     </script>

@@ -26,7 +26,7 @@ func NewAuthUseCase(cfg *configs.Configs, ctmsUC ctms.UseCase, userUC users.UseC
 	return &AuthUS{cfg: cfg, ctmsUC: ctmsUC, userUC: userUC, facebookUC: facebookUC}
 }
 
-func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest, id string) error {
+func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest) error {
 	user := &types.LoginCtmsRequest{
 		Username: loginRequest.Username,
 		Password: loginRequest.Password,
@@ -52,7 +52,7 @@ func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest, i
 		newUser := &models.User{
 			Username:     loginRequest.Username,
 			Password:     loginRequest.Password,
-			SubscribedID: id,
+			SubscribedID: loginRequest.Id,
 		}
 
 		_, err := a.userUC.CreateNewUser(ctx, newUser)
@@ -64,7 +64,7 @@ func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest, i
 	}
 
 	if existedUser != nil {
-		if existedUser.SubscribedID != id {
+		if existedUser.SubscribedID != loginRequest.Id {
 			a.facebookUC.SendTextMessage(ctx, existedUser.SubscribedID, "CTMS BOT: Tài khoản này đã được đăng ký với người dùng khác. Bot sẽ hủy đăng ký tài khoản này.")
 
 		}
@@ -72,7 +72,7 @@ func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest, i
 		updateUser := &models.User{
 			Username:     loginRequest.Username,
 			Password:     loginRequest.Password,
-			SubscribedID: id,
+			SubscribedID: loginRequest.Id,
 		}
 
 		filter := bson.M{"username": loginRequest.Username}
@@ -85,7 +85,7 @@ func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest, i
 
 	}
 
-	a.facebookUC.SendTextMessage(ctx, id, "CTMS BOT: Đăng nhập thành công.")
+	a.facebookUC.SendTextMessage(ctx, loginRequest.Id, "CTMS BOT: Đăng nhập thành công.")
 
 	return nil
 }
