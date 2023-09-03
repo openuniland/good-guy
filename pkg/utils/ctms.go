@@ -35,7 +35,7 @@ func IsExamScheduleTimeChanged(oldExamSchedule, newExamSchedule types.ExamSchedu
 }
 
 func DailyScheduleMessage(message string, dailySchedule *types.DailySchedule) string {
-	return message + ":\n" +
+	return message + "\n" +
 		`-----------------------` + "\n" +
 		`Giờ: ` + dailySchedule.Time + "\n" +
 		`Phòng: ` + dailySchedule.ClassRoom + "\n" +

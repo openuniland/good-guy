@@ -17,6 +17,7 @@ import (
 	"github.com/openuniland/good-guy/external/facebook"
 	"github.com/openuniland/good-guy/external/types"
 	examschedules "github.com/openuniland/good-guy/internal/exam_schedules"
+	"github.com/openuniland/good-guy/internal/models"
 	"github.com/openuniland/good-guy/pkg/utils"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
@@ -325,6 +326,19 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 	}
 
 	if oldExamSchedule == nil {
+		examSchedules := &models.ExamSchedules{
+			Username: user.Username,
+			Subjects: currentExamsSchedule,
+		}
+		_, err := us.examschedulesUS.CreateNewExamSchedules(ctx, examSchedules)
+		if err != nil {
+			log.Err(err).Msg("error create new exam schedule to get upcoming exam schedule")
+			return types.GetUpcomingExamScheduleResponse{
+				CurrentExamsSchedules: currentExamsSchedule,
+				OldExamsSchedules:     nil,
+			}, err
+		}
+
 		return types.GetUpcomingExamScheduleResponse{
 			CurrentExamsSchedules: currentExamsSchedule,
 			OldExamsSchedules:     nil,
