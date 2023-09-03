@@ -3,11 +3,10 @@ package jobs
 import (
 	"context"
 
-	"github.com/openuniland/good-guy/internal/models"
 	"github.com/rs/zerolog/log"
 )
 
-func (j *Jobs) SyncArticles() {
+func (j *Jobs) syncArticles() {
 	log.Info().Msg("start SyncArticles")
 	res, err := j.articleUC.UpdatedWithNewArticle(context.Background())
 	if err != nil {
@@ -20,27 +19,22 @@ func (j *Jobs) SyncArticles() {
 		return
 	}
 
-	users, err := j.userUC.GetUsers(context.Background())
-	if err != nil {
-		log.Error().Err(err).Msg("SyncArticles")
-		return
-	}
+	for _, id := range res.SubscribedIDs {
 
-	for _, user := range users {
-		go func(user *models.User) {
+		go func(id string) {
 			for _, article := range res.Data {
-				log.Info().Msg("Send message to user: " + user.SubscribedID)
+				log.Info().Msg("Send message to user: " + id)
 
 				link := j.cfg.UrlCrawlerList.FithouUrl + article.Link
 
 				message := "📰 " + article.Title + "\n\n" + link + "\n\n"
-				err := j.facebookUC.SendTextMessage(context.Background(), user.SubscribedID, message)
+				err := j.facebookUC.SendTextMessage(context.Background(), id, message)
 				if err != nil {
 					log.Error().Err(err).Msg("SyncArticles")
 					return
 				}
 			}
 
-		}(user)
+		}(id)
 	}
 }

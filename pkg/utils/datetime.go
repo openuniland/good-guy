@@ -33,6 +33,8 @@ func TodayFormatted() string {
 	mmStr := fmt.Sprintf("%02d", mm)
 
 	date := ddStr + "/" + mmStr + "/" + fmt.Sprintf("%d", yyyy)
+	fmt.Println(date)
+	return "31/08/2023"
 	return date
 }
 

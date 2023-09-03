@@ -91,8 +91,9 @@ func (a *ArticleUS) UpdatedWithNewArticle(ctx context.Context) (*types.UpdatedWi
 	}
 
 	return &types.UpdatedWithNewArticleResponse{
-		Data:  articles,
-		IsNew: true,
+		Data:          articles,
+		IsNew:         true,
+		SubscribedIDs: oldArticle.SubscribedIDs,
 	}, nil
 }
 

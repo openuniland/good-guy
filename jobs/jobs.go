@@ -32,12 +32,27 @@ func (j *Jobs) Run() {
 
 	//every 25 minutes
 	c.AddFunc("*/25 * * * *", func() {
-		go j.SyncArticles()
+		go j.syncArticles()
 	})
 
 	//20h every day
 	c.AddFunc("0 20 * * *", func() {
 		go j.getUpcomingExamSchedule()
+	})
+
+	// 6h45 am every day
+	c.AddFunc("0 45 6 * * *", func() {
+		go j.morningClassSchedule()
+	})
+
+	// 12h00 pm every day
+	c.AddFunc("0 0 12 * * *", func() {
+		go j.afternoonClassSchedule()
+	})
+
+	// 16h30 pm every day
+	c.AddFunc("0 30 16 * * *", func() {
+		go j.eveningClassSchedule()
 	})
 
 	c.Start()

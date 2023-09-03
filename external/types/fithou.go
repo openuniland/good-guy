@@ -7,6 +7,7 @@ type ArticleCrawl struct {
 }
 
 type UpdatedWithNewArticleResponse struct {
-	Data  []*ArticleCrawl `json:"data"`
-	IsNew bool            `json:"is_new"`
+	Data          []*ArticleCrawl `json:"data"`
+	IsNew         bool            `json:"is_new"`
+	SubscribedIDs []string        `bson:"subscribed_ids" json:"subscribed_ids"`
 }

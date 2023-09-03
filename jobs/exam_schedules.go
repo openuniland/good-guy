@@ -11,25 +11,29 @@ import (
 func (j *Jobs) getUpcomingExamSchedule() {
 	users, err := j.userUC.GetUsers(context.Background())
 	if err != nil {
-		log.Error().Err(err).Msg("SyncArticles")
+		log.Error().Err(err).Msg("[JOBS - getUpcomingExamSchedule]" + err.Error())
 		return
 	}
 
 	for _, user := range users {
-		go func(user *models.User) {
 
-			u := &types.LoginCtmsRequest{
-				Username: user.Username,
-				Password: user.Password,
-			}
-			err := j.ctmsUS.SendChangedExamScheduleAndNewExamScheduleToUser(context.Background(), u, user.SubscribedID)
-			if err != nil {
-				log.Error().Err(err).Msg("[JOBS - getUpcomingExamSchedule]" + " - " + user.Username)
-				return
-			}
+		if user.IsExamDay {
+			go func(user *models.User) {
 
-			log.Info().Msg("[JOBS - getUpcomingExamSchedule]" + " - " + user.Username)
+				u := &types.LoginCtmsRequest{
+					Username: user.Username,
+					Password: user.Password,
+				}
+				err := j.ctmsUS.SendChangedExamScheduleAndNewExamScheduleToUser(context.Background(), u, user.SubscribedID)
+				if err != nil {
+					log.Error().Err(err).Msg("[JOBS - getUpcomingExamSchedule]" + " - " + user.Username)
+					return
+				}
 
-		}(user)
+				log.Info().Msg("[JOBS - getUpcomingExamSchedule]" + " - " + user.Username)
+
+			}(user)
+		}
+
 	}
 }
