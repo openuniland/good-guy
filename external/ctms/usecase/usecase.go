@@ -92,7 +92,8 @@ func (us *CtmsUS) LoginCtms(ctx context.Context, user *types.LoginCtmsRequest) (
 
 	if bytes.Contains(body, []byte("Xin chào mừng")) {
 		return &types.LoginCtmsResponse{
-			Cookie: cookie,
+			Cookie:   cookie,
+			Username: user.Username,
 		}, nil
 	}
 
@@ -312,6 +313,8 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 	currentExamsSchedule, err := us.GetExamSchedule(ctx, cookie.Cookie)
 	if err != nil {
 		log.Err(err).Msg("error get exam schedule to get upcoming exam schedule")
+
+		us.LogoutCtms(ctx, cookie.Cookie)
 		return types.GetUpcomingExamScheduleResponse{}, err
 	}
 

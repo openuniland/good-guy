@@ -62,6 +62,7 @@ func (m *MongoDB) connect(cfg *configs.Configs) error {
 	m.Client = client
 
 	log.Info().Msg("connected to mongodb")
+
 	return nil
 }
 

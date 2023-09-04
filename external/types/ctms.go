@@ -6,7 +6,8 @@ type LoginCtmsRequest struct {
 }
 
 type LoginCtmsResponse struct {
-	Cookie string `json:"cookie"`
+	Cookie   string `json:"cookie"`
+	Username string `json:"username"`
 }
 
 type LogoutCtmsRequest struct {
