@@ -98,7 +98,7 @@ func (us *CtmsUS) LoginCtms(ctx context.Context, user *types.LoginCtmsRequest) (
 	}
 
 	if bytes.Contains(body, []byte("Sai Tên đăng nhập hoặc Mật khẩu")) {
-		return nil, errors.New("wrong username or password")
+		return nil, errors.New("Incorrect username or password")
 	}
 
 	return nil, errors.New("an unknown error")
@@ -178,6 +178,15 @@ func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	go func() {
+		// [LOGOUT_CTMS]
+		err = us.LogoutCtms(ctx, cookie)
+		if err != nil {
+			log.Error().Err(err).Msgf("[ERROR]:[GetDailySchedule]:[error while login]:[COOKIE=%s]:[%v]", cookie, err)
+		}
+		log.Info().Msgf("[INFO]:[GetDailySchedule]:[logout successful]:[COOKIE=%s]", cookie)
+	}()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
@@ -265,6 +274,15 @@ func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.E
 	}
 	defer resp.Body.Close()
 
+	go func() {
+		// [LOGOUT_CTMS]
+		err = us.LogoutCtms(ctx, cookie)
+		if err != nil {
+			log.Error().Err(err).Msgf("[ERROR]:[GetExamSchedule]:[error while login]:[COOKIE=%s]:[%v]", cookie, err)
+		}
+		log.Info().Msgf("[INFO]:[GetExamSchedule]:[logout successful]:[COOKIE=%s]", cookie)
+	}()
+
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		log.Err(err).Msg("error parse response to get exam schedule" + err.Error())
@@ -313,8 +331,6 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 	currentExamsSchedule, err := us.GetExamSchedule(ctx, cookie.Cookie)
 	if err != nil {
 		log.Err(err).Msg("error get exam schedule to get upcoming exam schedule")
-
-		us.LogoutCtms(ctx, cookie.Cookie)
 		return types.GetUpcomingExamScheduleResponse{}, err
 	}
 

@@ -37,6 +37,15 @@ func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest) e
 		return err
 	}
 
+	go func() {
+		// [LOGOUT_CTMS]
+		err = a.ctmsUC.LogoutCtms(ctx, res.Cookie)
+		if err != nil {
+			log.Error().Err(err).Msgf("[ERROR]:[Login]:[error while login]:[INFO=%s, COOKIE=%s]:[%v]", user.Username, res.Cookie, err)
+		}
+		log.Info().Msgf("[INFO]:[Login]:[logout successful]:[INFO=%s, COOKIE=%s]", user.Username, res.Cookie)
+	}()
+
 	if res.Cookie == "" {
 		return fmt.Errorf("error login ctms")
 	}
@@ -46,12 +55,6 @@ func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest) e
 	if err != nil {
 		log.Error().Err(err).Msg("error getting user by username")
 
-		err := a.ctmsUC.LogoutCtms(ctx, res.Cookie)
-		if err != nil {
-			log.Error().Err(err).Msgf("[ERROR]:[Login]:[error while login]:[INFO=%s, COOKIE=%s]:[%v]", user.Username, res.Cookie, err)
-		}
-
-		log.Info().Msgf("[INFO]:[Login]:[logout successful]:[INFO=%s, COOKIE=%s]", user.Username, res.Cookie)
 		return err
 	}
 

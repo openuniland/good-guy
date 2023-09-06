@@ -11,6 +11,7 @@ import (
 	authHttp "github.com/openuniland/good-guy/internal/auth/delivery"
 	commonHttp "github.com/openuniland/good-guy/internal/common/delivery"
 	examSchedulesHttp "github.com/openuniland/good-guy/internal/exam_schedules/delivery"
+	"github.com/openuniland/good-guy/internal/middlewares"
 	userHttp "github.com/openuniland/good-guy/internal/users/delivery"
 	"github.com/openuniland/good-guy/jobs"
 	"github.com/openuniland/good-guy/pkg/frameworks"
@@ -61,6 +62,9 @@ func (server *Server) MapHandlers() {
 	examSchedulesHandlers := examSchedulesHttp.NewExamSchedulesHandlers(server.configs, examSchedulesUS)
 	authHandlers := authHttp.NewCtmsHandlers(server.configs, authUC)
 	commonHandlers := commonHttp.NewCommonHandlers(server.configs, commonUC)
+
+	// Init middlewares
+	mw := middlewares.NewMiddlewareManager(server.configs)
 
 	// Jobs
 	jobs := jobs.NewJobs(server.configs, articleUS, userUS, facebookUS, ctmsUC)
@@ -122,12 +126,12 @@ func (server *Server) MapHandlers() {
 	})
 
 	// Map routes
-	ctmsHttp.MapCtmsRoutes(ctms, authCtmsHandlers)
-	articleHttp.MapArticleRoutes(articles, articleHandlers)
-	fithouHttp.MapFithouRoutes(fithou, fithouHandlers)
-	facebookHttp.MapFacebookRoutes(facebook, facebookHandlers)
-	userHttp.MapUserRoutes(users, userHandlers)
-	examSchedulesHttp.MapExamSchedulesRoutes(examSchedules, examSchedulesHandlers)
+	ctmsHttp.MapCtmsRoutes(ctms, authCtmsHandlers, mw)
+	articleHttp.MapArticleRoutes(articles, articleHandlers, mw)
+	fithouHttp.MapFithouRoutes(fithou, fithouHandlers, mw)
+	facebookHttp.MapFacebookRoutes(facebook, facebookHandlers, mw)
+	userHttp.MapUserRoutes(users, userHandlers, mw)
+	examSchedulesHttp.MapExamSchedulesRoutes(examSchedules, examSchedulesHandlers, mw)
 	commonHttp.MapCommonRoutes(common, commonHandlers)
 	authHttp.MapAuthRoutes(auth, authHandlers)
 
