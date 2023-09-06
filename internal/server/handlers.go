@@ -2,7 +2,6 @@ package server
 
 import (
 	"html/template"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	ctmsHttp "github.com/openuniland/good-guy/external/ctms/delivery"
@@ -30,20 +29,12 @@ import (
 	examSchedulesRepo "github.com/openuniland/good-guy/internal/exam_schedules/repository"
 	userRepo "github.com/openuniland/good-guy/internal/users/repository"
 	cors "github.com/rs/cors/wrapper/gin"
-	"github.com/rs/zerolog/log"
 )
 
 func (server *Server) MapHandlers() {
 	router := gin.Default()
 	router.Use(cors.AllowAll())
 
-	currentDir, err := os.Getwd()
-	if err != nil {
-		log.Fatal().Err(err).Msg("cannot get current directory")
-		return
-	}
-
-	router.LoadHTMLGlob(currentDir + "/pkg/frameworks/web/*")
 	router.Static("/static", "./static")
 
 	// Init repositories
