@@ -1,7 +1,9 @@
 package server
 
 import (
+	"fmt"
 	"html/template"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	ctmsHttp "github.com/openuniland/good-guy/external/ctms/delivery"
@@ -71,7 +73,9 @@ func (server *Server) MapHandlers() {
 
 	// Init web
 	router.GET("/", func(c *gin.Context) {
-		ts, err := template.ParseFiles(frameworks.VIEWS.Home)
+		p, _ := os.Getwd()
+		fmt.Println(p)
+		ts, err := template.ParseFiles(p + "/pkg/frameworks/web/index.html")
 		if err != nil {
 			c.JSON(500, gin.H{
 				"message": "Error",
