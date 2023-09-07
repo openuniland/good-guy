@@ -27,7 +27,7 @@ func (j *Jobs) Run() {
 
 	//every 5 seconds
 	c.AddFunc("*/5 * * * * *", func() {
-		// go j.getUpcomingExamSchedule()
+		go j.syncArticles()
 	})
 
 	//every 25 minutes
