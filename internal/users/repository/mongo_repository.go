@@ -119,7 +119,7 @@ func (u *userRepo) FindOneUserByCondition(ctx context.Context, filter interface{
 	return user, nil
 }
 
-func (u *userRepo) FindOneAndUpdate(ctx context.Context, filter interface{}, update interface{}) (*models.User, error) {
+func (u *userRepo) FindOneAndUpdate(ctx context.Context, filter, update bson.M) (*models.User, error) {
 	dbName := u.cfg.MongoDB.MongoDBName
 
 	coll := u.mongodb.Client.Database(dbName).Collection(collectionName)
@@ -128,6 +128,7 @@ func (u *userRepo) FindOneAndUpdate(ctx context.Context, filter interface{}, upd
 
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 
+	update["updated_at"] = primitive.NewDateTimeFromTime(time.Now())
 	updateDoc := bson.M{
 		"$set": update,
 	}

@@ -110,10 +110,10 @@ func (u *userHandlers) FindOneAndUpdateUser() gin.HandlerFunc {
 
 		filter := bson.M{"username": user.Username}
 
-		updateUser := &models.User{
-			Username:     user.Username,
-			Password:     user.Password,
-			SubscribedID: user.SubscribedID,
+		updateUser := bson.M{
+			"username":      user.Username,
+			"password":      user.Password,
+			"subscribed_id": user.SubscribedID,
 		}
 
 		res, err := u.userUC.FindOneAndUpdateUser(ctx, filter, updateUser)

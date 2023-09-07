@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/openuniland/good-guy/internal/models"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -12,6 +13,6 @@ type Repository interface {
 	GetUsers(ctx context.Context) ([]*models.User, error)
 	Find(ctx context.Context, filter interface{}) ([]*models.User, error)
 	FindOneUserByCondition(ctx context.Context, filter interface{}) (*models.User, error)
-	FindOneAndUpdate(ctx context.Context, filter interface{}, update interface{}) (*models.User, error)
+	FindOneAndUpdate(ctx context.Context, filter, update bson.M) (*models.User, error)
 	FindOneAndDelete(ctx context.Context, filter interface{}) *mongo.SingleResult
 }

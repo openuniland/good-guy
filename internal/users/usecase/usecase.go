@@ -64,7 +64,7 @@ func (u *UserUS) GetUserByUsername(ctx context.Context, username string) (*model
 	return user, nil
 }
 
-func (u *UserUS) FindOneAndUpdateUser(ctx context.Context, filter, update interface{}) (*models.User, error) {
+func (u *UserUS) FindOneAndUpdateUser(ctx context.Context, filter, update bson.M) (*models.User, error) {
 	res, err := u.userRepo.FindOneAndUpdate(ctx, filter, update)
 	if err != nil {
 		log.Error().Err(err).Msg("error updating user")

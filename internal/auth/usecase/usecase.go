@@ -79,10 +79,10 @@ func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest) e
 
 		}
 
-		updateUser := &models.User{
-			Username:     loginRequest.Username,
-			Password:     loginRequest.Password,
-			SubscribedID: loginRequest.Id,
+		updateUser := bson.M{
+			"username":      loginRequest.Username,
+			"password":      loginRequest.Password,
+			"subscribed_id": loginRequest.Id,
 		}
 
 		filter := bson.M{"username": loginRequest.Username}
