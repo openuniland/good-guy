@@ -26,13 +26,14 @@ func NewJobs(cfg *configs.Configs, articleUC articles.UseCase, userUC users.UseC
 
 func (j *Jobs) Run() {
 
-	vn, _ := time.LoadLocation(j.cfg.Server.Tz)
-	c := cron.New(cron.WithLocation(vn))
-
 	//every 5 seconds
-	// c.AddFunc("*/5 * * * * *", func() {
-	// 	log.Info().Msg("Running testtttttttttttttttttttttttttttttt")
-	// })
+	// set timezone
+	loc, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
+	c := cron.New(cron.WithLocation(loc), cron.WithSeconds())
+
+	c.AddFunc("*/5 * * * * *", func() {
+		log.Info().Msg("Running testtttttttttttttttttttttttttttttt")
+	})
 
 	//every 25 minutes
 	c.AddFunc("*/25 * * * *", func() {
@@ -64,9 +65,9 @@ func (j *Jobs) Run() {
 		go j.eveningClassSchedule()
 	})
 
-	// 14h00 pm every day
-	c.AddFunc("0 0 14 * * *", func() {
-		log.Info().Msg("ttttttttttttttttttt")
+	// 13h30 pm every day
+	c.AddFunc("0 15 14 * * *", func() {
+		log.Info().Msg("Running testtttttttttttttttttttttttttttttt")
 	})
 
 	c.Start()
