@@ -27,9 +27,8 @@ func (j *Jobs) Run() {
 	c := cron.New(cron.WithSeconds())
 
 	//every 5 seconds
-	c.AddFunc("*/5 * * * * *", func() {
-		log.Info().Msg("Running testtttttttttttttttttttttttttttttt")
-	})
+	// c.AddFunc("*/5 * * * * *", func() {
+	// })
 
 	//every 25 minutes
 	c.AddFunc("*/25 * * * *", func() {
@@ -59,11 +58,6 @@ func (j *Jobs) Run() {
 	c.AddFunc("0 30 16 * * *", func() {
 		log.Info().Msg("Running eveningClassSchedule")
 		go j.eveningClassSchedule()
-	})
-
-	// 13h30 pm every day
-	c.AddFunc("0 59 14 * * *", func() {
-		log.Info().Msg("Running 14:59")
 	})
 
 	c.Start()

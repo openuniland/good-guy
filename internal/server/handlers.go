@@ -1,10 +1,7 @@
 package server
 
 import (
-	"fmt"
-	"io"
-	"os"
-	"path/filepath"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	ctmsHttp "github.com/openuniland/good-guy/external/ctms/delivery"
@@ -40,6 +37,7 @@ func (server *Server) MapHandlers() {
 	router.Use(cors.AllowAll())
 
 	router.Static("/static", "./static")
+	router.LoadHTMLGlob("templates/*")
 
 	// Init repositories
 	articleRepo := articleRepo.NewArticleRepository(server.configs, server.mongo)
@@ -76,58 +74,11 @@ func (server *Server) MapHandlers() {
 	// Init web
 
 	router.GET("/", func(c *gin.Context) {
-		currentDir, err := os.Getwd()
-		if err != nil {
-			fmt.Println("Not found currentDir")
-			return
-		}
-		fmt.Println("currentDir", currentDir)
-		filePath := filepath.Join(currentDir, "/internal/server/index.html")
-
-		file, err := os.Open(filePath)
-		if err != nil {
-			fmt.Printf("Không thể mở tệp: %v\n", err)
-			return
-		}
-		defer file.Close()
-
-		content, err := io.ReadAll(file)
-		if err != nil {
-			fmt.Printf("Không thể đọc tệp: %v\n", err)
-			return
-		}
-
-		fmt.Println("Nội dung tệp HTML:")
-		fmt.Println(string(content))
-
-		c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-		c.Writer.WriteString(string(content))
+		c.HTML(http.StatusOK, "index.html", nil)
 	})
 
-	// router.GET("/privacy-policy", func(c *gin.Context) {
-	// 	t, err := template.New("privacy-policy.html").ParseFiles(frameworks.Web().PrivacyPolicy)
-	// 	if err != nil {
-	// 		c.JSON(500, gin.H{
-	// 			"message": "Error",
-	// 			"err":     err,
-	// 		})
-	// 		return
-	// 	}
-
-	// 	t.Execute(c.Writer, nil)
-	// 	if err != nil {
-	// 		c.JSON(500, gin.H{
-	// 			"message": "Error",
-	// 			"err":     err,
-	// 		})
-	// 		return
-	// 	}
-	// })
-	router.GET("/test", func(c *gin.Context) {
-		c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-		c.Writer.WriteString(`
-		<h1>HELLO</h1>	
-		`)
+	router.GET("/privacy-policy", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "privacy-policy.html", nil)
 	})
 
 	// Init routes
