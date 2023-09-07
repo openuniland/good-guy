@@ -1,7 +1,10 @@
 package server
 
 import (
-	"net/http"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	ctmsHttp "github.com/openuniland/good-guy/external/ctms/delivery"
@@ -28,6 +31,8 @@ import (
 	examSchedulesRepo "github.com/openuniland/good-guy/internal/exam_schedules/repository"
 	userRepo "github.com/openuniland/good-guy/internal/users/repository"
 	cors "github.com/rs/cors/wrapper/gin"
+
+	_ "embed"
 )
 
 func (server *Server) MapHandlers() {
@@ -35,7 +40,6 @@ func (server *Server) MapHandlers() {
 	router.Use(cors.AllowAll())
 
 	router.Static("/static", "./static")
-	router.LoadHTMLGlob("templates/*")
 
 	// Init repositories
 	articleRepo := articleRepo.NewArticleRepository(server.configs, server.mongo)
@@ -70,11 +74,37 @@ func (server *Server) MapHandlers() {
 	jobs.Run()
 
 	// Init web
+
 	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title": "Main website",
-		})
+		currentDir, err := os.Getwd()
+		if err != nil {
+			fmt.Println("Không thể lấy đường dẫn thư mục làm việc hiện tại.")
+			return
+		}
+		filePath := filepath.Join(currentDir, "index.html")
+
+		file, err := os.Open(filePath)
+		if err != nil {
+			fmt.Printf("Không thể mở tệp: %v\n", err)
+			return
+		}
+		defer file.Close()
+
+		// Đọc nội dung tệp
+		content, err := io.ReadAll(file)
+		if err != nil {
+			fmt.Printf("Không thể đọc tệp: %v\n", err)
+			return
+		}
+
+		// In nội dung tệp
+		fmt.Println("Nội dung tệp HTML:")
+		fmt.Println(string(content))
+
+		c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+		c.Writer.WriteString(string(content))
 	})
+
 	// router.GET("/privacy-policy", func(c *gin.Context) {
 	// 	t, err := template.New("privacy-policy.html").ParseFiles(frameworks.Web().PrivacyPolicy)
 	// 	if err != nil {
