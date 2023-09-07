@@ -1,8 +1,6 @@
 package jobs
 
 import (
-	"time"
-
 	"github.com/openuniland/good-guy/configs"
 	"github.com/openuniland/good-guy/external/ctms"
 	"github.com/openuniland/good-guy/external/facebook"
@@ -26,12 +24,9 @@ func NewJobs(cfg *configs.Configs, articleUC articles.UseCase, userUC users.UseC
 
 func (j *Jobs) Run() {
 
+	c := cron.New(cron.WithSeconds())
+
 	//every 5 seconds
-	// set timezone Vietnam
-
-	loc, _ := time.LoadLocation("Asia/Bangkok")
-	c := cron.New(cron.WithLocation(loc), cron.WithSeconds())
-
 	c.AddFunc("*/5 * * * * *", func() {
 		log.Info().Msg("Running testtttttttttttttttttttttttttttttt")
 	})
@@ -67,7 +62,7 @@ func (j *Jobs) Run() {
 	})
 
 	// 13h30 pm every day
-	c.AddFunc("0 15 14 * * *", func() {
+	c.AddFunc("0 59 14 * * *", func() {
 		log.Info().Msg("Running testtttttttttttttttttttttttttttttt")
 	})
 
