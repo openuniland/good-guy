@@ -81,7 +81,8 @@ func (server *Server) MapHandlers() {
 			fmt.Println("Không thể lấy đường dẫn thư mục làm việc hiện tại.")
 			return
 		}
-		filePath := filepath.Join(currentDir, "index.html")
+		fmt.Println("currentDir", currentDir)
+		filePath := filepath.Join(currentDir, "/internal/server/index.html")
 
 		file, err := os.Open(filePath)
 		if err != nil {
