@@ -1,6 +1,8 @@
 package jobs
 
 import (
+	"time"
+
 	"github.com/openuniland/good-guy/configs"
 	"github.com/openuniland/good-guy/external/ctms"
 	"github.com/openuniland/good-guy/external/facebook"
@@ -24,7 +26,8 @@ func NewJobs(cfg *configs.Configs, articleUC articles.UseCase, userUC users.UseC
 
 func (j *Jobs) Run() {
 
-	c := cron.New(cron.WithSeconds())
+	vn, _ := time.LoadLocation(j.cfg.Server.Tz)
+	c := cron.New(cron.WithLocation(vn))
 
 	//every 5 seconds
 	// c.AddFunc("*/5 * * * * *", func() {
@@ -61,9 +64,9 @@ func (j *Jobs) Run() {
 		go j.eveningClassSchedule()
 	})
 
-	// 13h30 pm every day
-	c.AddFunc("0 40 13 * * *", func() {
-		log.Info().Msg("Running testtttttttttttttttttttttttttttttt")
+	// 14h00 pm every day
+	c.AddFunc("0 0 14 * * *", func() {
+		log.Info().Msg("ttttttttttttttttttt")
 	})
 
 	c.Start()
