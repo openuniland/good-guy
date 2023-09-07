@@ -1,13 +1,18 @@
 package frameworks
 
+import "os"
+
 type HtmlName struct {
 	Home          string
 	PrivacyPolicy string
 }
 
-var TemplateEndpoints = "./pkg/frameworks"
+func Web() *HtmlName {
+	pwd, _ := os.Getwd()
+	VIEWS := &HtmlName{
+		Home:          pwd + "/web/index.html",
+		PrivacyPolicy: pwd + "/web/privacy-policy.html",
+	}
 
-var VIEWS = &HtmlName{
-	Home:          TemplateEndpoints + "/web/index.html",
-	PrivacyPolicy: TemplateEndpoints + "/web/privacy-policy.html",
+	return VIEWS
 }

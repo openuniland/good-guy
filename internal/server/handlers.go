@@ -2,6 +2,7 @@ package server
 
 import (
 	"html/template"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	ctmsHttp "github.com/openuniland/good-guy/external/ctms/delivery"
@@ -36,6 +37,7 @@ func (server *Server) MapHandlers() {
 	router.Use(cors.AllowAll())
 
 	router.Static("/static", "./static")
+	router.LoadHTMLGlob("templates/*")
 
 	// Init repositories
 	articleRepo := articleRepo.NewArticleRepository(server.configs, server.mongo)
@@ -71,26 +73,12 @@ func (server *Server) MapHandlers() {
 
 	// Init web
 	router.GET("/", func(c *gin.Context) {
-		t, err := template.New("index.html").ParseFiles(frameworks.VIEWS.Home)
-		if err != nil {
-			c.JSON(500, gin.H{
-				"message": "Error",
-				"err":     err,
-			})
-			return
-		}
-
-		t.Execute(c.Writer, nil)
-		if err != nil {
-			c.JSON(500, gin.H{
-				"message": "Error",
-				"err":     err,
-			})
-			return
-		}
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"title": "Main website",
+		})
 	})
 	router.GET("/privacy-policy", func(c *gin.Context) {
-		t, err := template.New("privacy-policy.html").ParseFiles(frameworks.VIEWS.PrivacyPolicy)
+		t, err := template.New("privacy-policy.html").ParseFiles(frameworks.Web().PrivacyPolicy)
 		if err != nil {
 			c.JSON(500, gin.H{
 				"message": "Error",
