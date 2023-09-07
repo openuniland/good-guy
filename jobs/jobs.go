@@ -63,7 +63,7 @@ func (j *Jobs) Run() {
 
 	// 13h30 pm every day
 	c.AddFunc("0 59 14 * * *", func() {
-		log.Info().Msg("Running testtttttttttttttttttttttttttttttt")
+		log.Info().Msg("Running 14:59")
 	})
 
 	c.Start()
