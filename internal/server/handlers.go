@@ -78,7 +78,7 @@ func (server *Server) MapHandlers() {
 	router.GET("/", func(c *gin.Context) {
 		currentDir, err := os.Getwd()
 		if err != nil {
-			fmt.Println("Không thể lấy đường dẫn thư mục làm việc hiện tại.")
+			fmt.Println("Not found currentDir")
 			return
 		}
 		fmt.Println("currentDir", currentDir)
@@ -91,14 +91,12 @@ func (server *Server) MapHandlers() {
 		}
 		defer file.Close()
 
-		// Đọc nội dung tệp
 		content, err := io.ReadAll(file)
 		if err != nil {
 			fmt.Printf("Không thể đọc tệp: %v\n", err)
 			return
 		}
 
-		// In nội dung tệp
 		fmt.Println("Nội dung tệp HTML:")
 		fmt.Println(string(content))
 

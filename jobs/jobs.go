@@ -27,8 +27,9 @@ func NewJobs(cfg *configs.Configs, articleUC articles.UseCase, userUC users.UseC
 func (j *Jobs) Run() {
 
 	//every 5 seconds
-	// set timezone
-	loc, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
+	// set timezone Vietnam
+
+	loc, _ := time.LoadLocation("Asia/Bangkok")
 	c := cron.New(cron.WithLocation(loc), cron.WithSeconds())
 
 	c.AddFunc("*/5 * * * * *", func() {
