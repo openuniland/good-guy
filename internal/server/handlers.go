@@ -1,7 +1,6 @@
 package server
 
 import (
-	"html/template"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +14,6 @@ import (
 	"github.com/openuniland/good-guy/internal/middlewares"
 	userHttp "github.com/openuniland/good-guy/internal/users/delivery"
 	"github.com/openuniland/good-guy/jobs"
-	"github.com/openuniland/good-guy/pkg/frameworks"
 
 	ctmsUS "github.com/openuniland/good-guy/external/ctms/usecase"
 	facebookUS "github.com/openuniland/good-guy/external/facebook/usecase"
@@ -77,25 +75,25 @@ func (server *Server) MapHandlers() {
 			"title": "Main website",
 		})
 	})
-	router.GET("/privacy-policy", func(c *gin.Context) {
-		t, err := template.New("privacy-policy.html").ParseFiles(frameworks.Web().PrivacyPolicy)
-		if err != nil {
-			c.JSON(500, gin.H{
-				"message": "Error",
-				"err":     err,
-			})
-			return
-		}
+	// router.GET("/privacy-policy", func(c *gin.Context) {
+	// 	t, err := template.New("privacy-policy.html").ParseFiles(frameworks.Web().PrivacyPolicy)
+	// 	if err != nil {
+	// 		c.JSON(500, gin.H{
+	// 			"message": "Error",
+	// 			"err":     err,
+	// 		})
+	// 		return
+	// 	}
 
-		t.Execute(c.Writer, nil)
-		if err != nil {
-			c.JSON(500, gin.H{
-				"message": "Error",
-				"err":     err,
-			})
-			return
-		}
-	})
+	// 	t.Execute(c.Writer, nil)
+	// 	if err != nil {
+	// 		c.JSON(500, gin.H{
+	// 			"message": "Error",
+	// 			"err":     err,
+	// 		})
+	// 		return
+	// 	}
+	// })
 	router.GET("/test", func(c *gin.Context) {
 		c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 		c.Writer.WriteString(`
