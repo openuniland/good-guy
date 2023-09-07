@@ -10,6 +10,8 @@ import (
 	"github.com/openuniland/good-guy/pkg/db/mongodb"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	_ "time/tzdata"
 )
 
 func main() {
@@ -25,19 +27,9 @@ func main() {
 	log.Info().Msgf("load configs success")
 
 	// Set the default time zone to "Asia/Ho_Chi_Minh"
-	loc, err := time.LoadLocation("Asia/Ho_Chi_Minh")
-	if err != nil {
-		fmt.Println("Error loading time zone:", err)
-		return
-	}
-
-	// Set the default time zone
+	loc := time.FixedZone("GMT+7", 7*60*60)
 	time.Local = loc
-
-	// Get the current time
 	currentTime := time.Now()
-
-	// Print the current time in Vietnam
 	fmt.Println("Current time in Vietnam:", currentTime.Format(time.RFC3339))
 
 	mongo, err := mongodb.NewMongoDB(configs)
