@@ -3,6 +3,7 @@ package configs
 import (
 	"os"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -117,10 +118,15 @@ func LoadConfigs(path string) (configs *Configs, err error) {
 
 	err = viper.ReadInConfig()
 	if err != nil {
+		log.Fatal().Err(err).Msgf("[ERROR]:[LoadConfigs]:[viper.ReadInConfig()]:[ERROR_INFO=%v]", err)
 		return configs, err
 	}
 
 	err = viper.Unmarshal(&mapping)
+	if err != nil {
+		log.Fatal().Err(err).Msgf("[ERROR]:[LoadConfigs]:[viper.Unmarshal()]:[ERROR_INFO=%v]", err)
+		return configs, err
+	}
 
 	configs = &Configs{
 		Server: ServerConfig{
@@ -153,5 +159,5 @@ func LoadConfigs(path string) (configs *Configs, err error) {
 		},
 	}
 
-	return configs, err
+	return configs, nil
 }

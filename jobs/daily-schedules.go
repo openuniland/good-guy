@@ -3,10 +3,12 @@ package jobs
 import (
 	"context"
 
+	"github.com/openuniland/good-guy/constants"
 	"github.com/openuniland/good-guy/external/types"
 	"github.com/openuniland/good-guy/internal/models"
 	"github.com/openuniland/good-guy/pkg/utils"
 	"github.com/rs/zerolog/log"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 const (
@@ -24,7 +26,7 @@ const (
 func (j *Jobs) morningClassSchedule() {
 	users, err := j.userUC.GetUsers(context.Background())
 	if err != nil {
-		log.Error().Err(err).Msg("Error getting users")
+		log.Error().Err(err).Msgf("[JOBS][ERROR]:[morningClassSchedule]:[error while getting all users]:[ERROR_INFO=%v]", err)
 		return
 	}
 
@@ -32,20 +34,46 @@ func (j *Jobs) morningClassSchedule() {
 		if user.IsTrackTimetable {
 			go func(user *models.User) {
 				u := &types.LoginCtmsRequest{
-					Username: user.Username,
-					Password: user.Password,
+					Username:     user.Username,
+					Password:     user.Password,
+					SubscribedID: user.SubscribedID,
 				}
 
 				res, err := j.ctmsUS.LoginCtms(context.Background(), u)
 				if err != nil {
-					log.Error().Err(err).Msg("Error logging in CTMS")
+					log.Error().Err(err).Msgf("[JOBS][ERROR]:[morningClassSchedule]:[error while login ctms]:[ERROR_INFO=%v]", err)
 					return
 				}
 
 				dailySchedule, err := j.ctmsUS.GetDailySchedule(context.Background(), res.Cookie)
 				if err != nil {
-					log.Error().Err(err).Msg("Error getting daily schedule")
+					log.Error().Err(err).Msgf("[JOBS][ERROR]:[morningClassSchedule]:[error while getting daily schedule]:[ERROR_INFO=%v]", err)
+
+					if err.Error() == constants.NEED_TO_BUY_CTMS && !user.IsDisabled {
+
+						go func() {
+							filter := bson.M{"username": user.Username}
+							update := bson.M{"is_disabled": true}
+							_, err := j.userUC.FindOneAndUpdateUser(context.Background(), filter, update)
+							if err != nil {
+								log.Error().Err(err).Msgf("[JOBS][ERROR]:[morningClassSchedule]:[update user]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
+							}
+						}()
+
+						go func() {
+							j.facebookUC.SendTextMessage(context.Background(), user.SubscribedID, constants.NEED_TO_BUY_CTMS_RESPONSE)
+						}()
+					}
 					return
+				}
+
+				if user.IsDisabled {
+					filter := bson.M{"username": user.Username}
+					update := bson.M{"is_disabled": false}
+					_, err := j.userUC.FindOneAndUpdateUser(context.Background(), filter, update)
+					if err != nil {
+						log.Error().Err(err).Msgf("[JOBS][ERROR]:[morningClassSchedule]:[update user is_disabled=false]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
+					}
 				}
 
 				for _, schedule := range dailySchedule {
@@ -62,7 +90,7 @@ func (j *Jobs) morningClassSchedule() {
 func (j *Jobs) afternoonClassSchedule() {
 	users, err := j.userUC.GetUsers(context.Background())
 	if err != nil {
-		log.Error().Err(err).Msg("Error getting users")
+		log.Error().Err(err).Msgf("[JOBS][ERROR]:[afternoonClassSchedule]:[error while getting all users]:[ERROR_INFO=%v]", err)
 		return
 	}
 
@@ -70,8 +98,9 @@ func (j *Jobs) afternoonClassSchedule() {
 		if user.IsTrackTimetable {
 			go func(user *models.User) {
 				u := &types.LoginCtmsRequest{
-					Username: user.Username,
-					Password: user.Password,
+					Username:     user.Username,
+					Password:     user.Password,
+					SubscribedID: user.SubscribedID,
 				}
 
 				res, err := j.ctmsUS.LoginCtms(context.Background(), u)
@@ -83,7 +112,32 @@ func (j *Jobs) afternoonClassSchedule() {
 				dailySchedule, err := j.ctmsUS.GetDailySchedule(context.Background(), res.Cookie)
 				if err != nil {
 					log.Error().Err(err).Msg("Error getting daily schedule")
+
+					if err.Error() == constants.NEED_TO_BUY_CTMS && !user.IsDisabled {
+
+						go func() {
+							filter := bson.M{"username": user.Username}
+							update := bson.M{"is_disabled": true}
+							_, err := j.userUC.FindOneAndUpdateUser(context.Background(), filter, update)
+							if err != nil {
+								log.Error().Err(err).Msgf("[JOBS][ERROR]:[afternoonClassSchedule]:[update user]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
+							}
+						}()
+
+						go func() {
+							j.facebookUC.SendTextMessage(context.Background(), user.SubscribedID, constants.NEED_TO_BUY_CTMS_RESPONSE)
+						}()
+					}
 					return
+				}
+
+				if user.IsDisabled {
+					filter := bson.M{"username": user.Username}
+					update := bson.M{"is_disabled": false}
+					_, err := j.userUC.FindOneAndUpdateUser(context.Background(), filter, update)
+					if err != nil {
+						log.Error().Err(err).Msgf("[JOBS][ERROR]:[afternoonClassSchedule]:[update user is_disabled=false]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
+					}
 				}
 
 				for _, schedule := range dailySchedule {
@@ -100,7 +154,7 @@ func (j *Jobs) afternoonClassSchedule() {
 func (j *Jobs) eveningClassSchedule() {
 	users, err := j.userUC.GetUsers(context.Background())
 	if err != nil {
-		log.Error().Err(err).Msg("Error getting users")
+		log.Error().Err(err).Msgf("[JOBS][ERROR]:[eveningClassSchedule]:[error while getting all users]:[ERROR_INFO=%v]", err)
 		return
 	}
 
@@ -108,8 +162,9 @@ func (j *Jobs) eveningClassSchedule() {
 		if user.IsTrackTimetable {
 			go func(user *models.User) {
 				u := &types.LoginCtmsRequest{
-					Username: user.Username,
-					Password: user.Password,
+					Username:     user.Username,
+					Password:     user.Password,
+					SubscribedID: user.SubscribedID,
 				}
 
 				res, err := j.ctmsUS.LoginCtms(context.Background(), u)
@@ -121,7 +176,32 @@ func (j *Jobs) eveningClassSchedule() {
 				dailySchedule, err := j.ctmsUS.GetDailySchedule(context.Background(), res.Cookie)
 				if err != nil {
 					log.Error().Err(err).Msg("Error getting daily schedule")
+
+					if err.Error() == constants.NEED_TO_BUY_CTMS && !user.IsDisabled {
+
+						go func() {
+							filter := bson.M{"username": user.Username}
+							update := bson.M{"is_disabled": true}
+							_, err := j.userUC.FindOneAndUpdateUser(context.Background(), filter, update)
+							if err != nil {
+								log.Error().Err(err).Msgf("[JOBS][ERROR]:[afternoonClassSchedule]:[update user]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
+							}
+						}()
+
+						go func() {
+							j.facebookUC.SendTextMessage(context.Background(), user.SubscribedID, constants.NEED_TO_BUY_CTMS_RESPONSE)
+						}()
+					}
 					return
+				}
+
+				if user.IsDisabled {
+					filter := bson.M{"username": user.Username}
+					update := bson.M{"is_disabled": false}
+					_, err := j.userUC.FindOneAndUpdateUser(context.Background(), filter, update)
+					if err != nil {
+						log.Error().Err(err).Msgf("[JOBS][ERROR]:[afternoonClassSchedule]:[update user is_disabled=false]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
+					}
 				}
 
 				for _, schedule := range dailySchedule {

@@ -1,8 +1,9 @@
 package types
 
 type LoginCtmsRequest struct {
-	Username string `json:"username" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Username     string `json:"username" validate:"required"`
+	Password     string `json:"password" validate:"required"`
+	SubscribedID string `json:"subscribed_id" validate:"required"`
 }
 
 type LoginCtmsResponse struct {

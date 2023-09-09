@@ -48,9 +48,9 @@ func (server *Server) MapHandlers() {
 	fithouUS := fithouUS.NewFithouUseCase(server.configs)
 	articleUS := articleUS.NewArticleUseCase(server.configs, articleRepo, fithouUS)
 	facebookUS := facebookUS.NewFacebookUseCase(server.configs)
-	userUS := userUS.NewUserUseCase(server.configs, userRepo)
 	examSchedulesUS := examSchedulesUS.NewExamSchedulesUseCase(server.configs, examSchedulesRepo)
-	ctmsUC := ctmsUS.NewCtmsUseCase(server.configs, examSchedulesUS, facebookUS)
+	userUS := userUS.NewUserUseCase(server.configs, userRepo)
+	ctmsUC := ctmsUS.NewCtmsUseCase(server.configs, examSchedulesUS, facebookUS, userUS)
 	authUC := authUC.NewAuthUseCase(server.configs, ctmsUC, userUS, facebookUS)
 	commonUC := commonUC.NewCommonUseCase(server.configs, facebookUS, ctmsUC, userUS, articleUS)
 

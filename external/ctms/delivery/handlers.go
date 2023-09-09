@@ -8,6 +8,7 @@ import (
 	"github.com/openuniland/good-guy/external/ctms"
 	"github.com/openuniland/good-guy/external/types"
 	"github.com/openuniland/good-guy/pkg/utils"
+	"github.com/rs/zerolog/log"
 )
 
 type ctmsHandlers struct {
@@ -30,6 +31,7 @@ func (c *ctmsHandlers) LoginCtms() gin.HandlerFunc {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
 			})
+			log.Err(err).Msgf("[ERROR]:[DELIVERY]:[LoginCtms]:[ctx.ShouldBindJSON(user)]:[INFO=%v]:[ERROR_INFO=%v]", user, err)
 			return
 		}
 
@@ -38,6 +40,7 @@ func (c *ctmsHandlers) LoginCtms() gin.HandlerFunc {
 		if err != nil {
 			errors := utils.ShowErrors(err)
 			ctx.JSON(http.StatusBadRequest, errors)
+
 			return
 		}
 

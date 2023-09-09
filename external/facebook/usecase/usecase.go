@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/openuniland/good-guy/configs"
@@ -34,14 +35,14 @@ func (us *FacebookUS) SendMessage(ctx context.Context, id string, message interf
 
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		log.Error().Err(err).Msg("error marshal data")
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[SendMessage]:[json.Marshal(data)]:[MESSAGE=%v, ID=%s]:[ERROR_INFO=%v]", message, id, err)
 		return err
 	}
 
 	url := fmt.Sprintf("https://graph.facebook.com/v14.0/me/messages?access_token=%s", us.cfg.FBConfig.FBVerifyToken)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		log.Error().Err(err).Msg("error create new request")
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[SendMessage]:[create new request]:[MESSAGE=%v, ID=%s]:[ERROR_INFO=%v]", message, id, err)
 		return err
 	}
 
@@ -50,13 +51,21 @@ func (us *FacebookUS) SendMessage(ctx context.Context, id string, message interf
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error().Err(err).Msg("error send request")
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[SendMessage]:[send request]:[MESSAGE=%v, ID=%s]:[ERROR_INFO=%v]", message, id, err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Error().Err(err).Msg("error response from Facebook API")
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[SendMessage]:[io.ReadAll(resp.Body)]:[MESSAGE=%v, ID=%s]:[ERROR_INFO=%v]", message, id, err)
+			return err
+		}
+		dataFromRequestBody := string(body)
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[SendMessage]:[Facebook API]:[MESSAGE=%v, ID=%s]:[ERROR_INFO=%v]", message, id, dataFromRequestBody)
+
 		return errors.New("error response from Facebook API")
 	}
 
@@ -77,14 +86,14 @@ func (us *FacebookUS) SendQuickReplies(ctx context.Context, id string, message s
 
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		log.Error().Err(err).Msg("error marshal data")
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[SendQuickReplies]:[json.Marshal(data)]:[MESSAGE=%v, ID=%s, QUICK_REPLIES=%v]:[ERROR_INFO=%v]", message, id, quickReplies, err)
 		return err
 	}
 
 	url := fmt.Sprintf("https://graph.facebook.com/v14.0/me/messages?access_token=%s", us.cfg.FBConfig.FBVerifyToken)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		log.Error().Err(err).Msg("error create new request")
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[SendQuickReplies]:[create new request]:[MESSAGE=%v, ID=%s, QUICK_REPLIES=%v]:[ERROR_INFO=%v]", message, id, quickReplies, err)
 		return err
 	}
 
@@ -93,14 +102,19 @@ func (us *FacebookUS) SendQuickReplies(ctx context.Context, id string, message s
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error().Err(err).Msg("error send request")
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[SendQuickReplies]:[send request]:[MESSAGE=%v, ID=%s, QUICK_REPLIES=%v]:[ERROR_INFO=%v]", message, id, quickReplies, err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Error().Err(err).Msg("error response from Facebook API")
-		return errors.New("error response from Facebook API")
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[SendQuickReplies]:[io.ReadAll(resp.Body)]:[MESSAGE=%v, ID=%s, QUICK_REPLIES=%v]:[ERROR_INFO=%v]", message, id, quickReplies, err)
+			return err
+		}
+		dataFromRequestBody := string(body)
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[SendQuickReplies]:[Facebook API]:[MESSAGE=%v, ID=%s, QUICK_REPLIES=%v]:[ERROR_INFO=%v]", message, id, quickReplies, dataFromRequestBody)
 	}
 
 	return nil

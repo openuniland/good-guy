@@ -13,11 +13,13 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/openuniland/good-guy/configs"
+	"github.com/openuniland/good-guy/constants"
 	"github.com/openuniland/good-guy/external/ctms"
 	"github.com/openuniland/good-guy/external/facebook"
 	"github.com/openuniland/good-guy/external/types"
 	examschedules "github.com/openuniland/good-guy/internal/exam_schedules"
 	"github.com/openuniland/good-guy/internal/models"
+	"github.com/openuniland/good-guy/internal/users"
 	"github.com/openuniland/good-guy/pkg/utils"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
@@ -26,21 +28,20 @@ import (
 const loginUrl = "/login.aspx"
 
 const SCHOOL_SCHEDULE_URL = "http://ctms.fithou.net.vn/Lichhoc.aspx?sid="
-const EXPIRED_CTMS = "Từ 2/2022, hãy thực hiện theo thông báo này để nhận được sự Hỗ trợ duy trì tài khoản truy cập CTMS từ khoa CNTT."
 const SESSION_EXPIRED_MESSAGE = "Phiên làm việc hết hạn hoặc Bạn không có quyền truy cập chức năng này"
 
 type CtmsUS struct {
 	cfg             *configs.Configs
 	examschedulesUS examschedules.UseCase
 	facebookUS      facebook.UseCase
+	userUS          users.UseCase
 }
 
-func NewCtmsUseCase(cfg *configs.Configs, examschedulesUS examschedules.UseCase, facebookUS facebook.UseCase) ctms.UseCase {
-	return &CtmsUS{cfg: cfg, examschedulesUS: examschedulesUS, facebookUS: facebookUS}
+func NewCtmsUseCase(cfg *configs.Configs, examschedulesUS examschedules.UseCase, facebookUS facebook.UseCase, userUS users.UseCase) ctms.UseCase {
+	return &CtmsUS{cfg: cfg, examschedulesUS: examschedulesUS, facebookUS: facebookUS, userUS: userUS}
 }
 
 func (us *CtmsUS) LoginCtms(ctx context.Context, user *types.LoginCtmsRequest) (*types.LoginCtmsResponse, error) {
-
 	ctmsUrl := us.cfg.UrlCrawlerList.CtmsUrl
 
 	hash := md5.Sum([]byte(user.Password))
@@ -61,7 +62,7 @@ func (us *CtmsUS) LoginCtms(ctx context.Context, user *types.LoginCtmsRequest) (
 
 	req, err := http.NewRequest("POST", ctmsUrl+loginUrl, bytes.NewBufferString(data.Encode()))
 	if err != nil {
-		log.Error().Msg("error create request login" + err.Error())
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginCtms]:[error while create request login]:[INFO=%s]:[%v]", user.Username, err)
 		return nil, err
 	}
 
@@ -77,20 +78,20 @@ func (us *CtmsUS) LoginCtms(ctx context.Context, user *types.LoginCtmsRequest) (
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Err(err).Msg("error send request login" + err.Error())
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginCtms]:[client.Do(req)]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
 		return nil, err
 	}
 	defer resp.Body.Close()
+	cookie := resp.Header.Get("Set-Cookie")
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Err(err).Msg("error read body login" + err.Error())
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginCtms]:[io.ReadAll(resp.Body)]:[INFO=%s]:[%v]", user.Username, err)
 		return nil, err
 	}
 
-	cookie := resp.Header.Get("Set-Cookie")
-
 	if bytes.Contains(body, []byte("Xin chào mừng")) {
+		log.Info().Msgf("[INFO]:[USECASE]:[LoginCtms]:[login successfully]:[INFO=%s]", user.Username)
 		return &types.LoginCtmsResponse{
 			Cookie:   cookie,
 			Username: user.Username,
@@ -98,9 +99,12 @@ func (us *CtmsUS) LoginCtms(ctx context.Context, user *types.LoginCtmsRequest) (
 	}
 
 	if bytes.Contains(body, []byte("Sai Tên đăng nhập hoặc Mật khẩu")) {
-		return nil, errors.New("Incorrect username or password")
+		log.Error().Msgf("[ERROR]:[USECASE]:[LoginCtms]:[incorrect username or password]:[INFO=%s]", user.Username)
+		return nil, errors.New(constants.INCORRECCT_USERNAME_OR_PASSWORD)
 	}
 
+	dataFromRequestBody := string(body)
+	log.Error().Msgf("[ERROR]:[USECASE]:[LoginCtms]:[unknown error]:[INFO=%s, BODY=%v]", user.Username, dataFromRequestBody)
 	return nil, errors.New("an unknown error")
 
 }
@@ -118,8 +122,7 @@ func (us *CtmsUS) LogoutCtms(ctx context.Context, cookie string) error {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", ctmsUrl+loginUrl, bytes.NewBufferString(data.Encode()))
 	if err != nil {
-
-		log.Err(err).Msg("error create request to logout" + err.Error())
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LogoutCtms]:[error while create request to logout]:[INFO=%s]:[ERROR_INFO=%v]", cookie, err)
 		return err
 	}
 
@@ -131,12 +134,11 @@ func (us *CtmsUS) LogoutCtms(ctx context.Context, cookie string) error {
 
 	_, err = client.Do(req)
 	if err != nil {
-		log.Err(err).Msg("error send request to logout" + err.Error())
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LogoutCtms]:[error while send request to logout]:[INFO=%s]:[ERROR_INFO=%v]", cookie, err)
 		return err
 	}
 
-	log.Info().Msg("logout success")
-
+	log.Info().Msgf("[INFO]:[USECASE]:[LogoutCtms]:[success]:[INFO=%s]", cookie)
 	return nil
 }
 
@@ -160,7 +162,7 @@ func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types
 	// Prepare the request
 	req, err := http.NewRequest("POST", SCHOOL_SCHEDULE_URL, bytes.NewBufferString(data.Encode()))
 	if err != nil {
-		log.Err(err).Msg("error create request to get daily schedule" + err.Error())
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetDailySchedule]:[error while create request to get daily schedule]:[INFO=%s]:[ERROR_INFO=%v]", cookie, err)
 		return nil, err
 	}
 	// Set request headers
@@ -174,7 +176,7 @@ func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types
 	// Send the request
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Err(err).Msg("error send request to get daily schedule" + err.Error())
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetDailySchedule]:[error while send request to get daily schedule]:[INFO=%s]:[ERROR_INFO=%v]", cookie, err)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -183,29 +185,27 @@ func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types
 		// [LOGOUT_CTMS]
 		err = us.LogoutCtms(ctx, cookie)
 		if err != nil {
-			log.Error().Err(err).Msgf("[ERROR]:[GetDailySchedule]:[error while login]:[COOKIE=%s]:[%v]", cookie, err)
+			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetDailySchedule]:[error while logout]:[COOKIE=%s]:[ERROR_INFO=%v]", cookie, err)
 		}
-		log.Info().Msgf("[INFO]:[GetDailySchedule]:[logout successful]:[COOKIE=%s]", cookie)
+		log.Info().Msgf("[INFO]:[USECASE]:[GetDailySchedule]:[logout successfully]:[COOKIE=%s]", cookie)
 	}()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Err(err).Msg("error parse response to get daily schedule" + err.Error())
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetDailySchedule]:[goquery.NewDocumentFromReader(resp.Body)]:[COOKIE=%s]:[ERROR_INFO=%v]", cookie, err)
 		return nil, err
 	}
 
 	NoPermissionText := doc.Find(".NoPermission h3").Text()
 	if strings.TrimSpace(NoPermissionText) == SESSION_EXPIRED_MESSAGE {
-
-		log.Error().Msg("session expired")
-		return nil, errors.New("session expired")
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetDailySchedule]:[session expired]:[COOKIE=%s]", cookie)
+		return nil, errors.New(constants.SESSION_EXPIRED)
 	}
 
-	expiredNotiText := doc.Find("#leftcontent #thongbao").Text()
-	if strings.TrimSpace(expiredNotiText) == EXPIRED_CTMS {
-
-		log.Error().Msg("need to buy ctm")
-		return nil, errors.New("need to buy ctm")
+	expiredCtmsText := strings.TrimSpace(doc.Find("#leftcontent #thongbao").Text())
+	if expiredCtmsText == constants.EXPIRED_CTMS {
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetDailySchedule]:[need to buy ctm]:[COOKIE=%s]", cookie)
+		return nil, errors.New(constants.NEED_TO_BUY_CTMS)
 	}
 
 	var dailyScheduleData []*types.DailySchedule
@@ -243,6 +243,7 @@ func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types
 
 	})
 
+	log.Info().Msgf("[INFO]:[USECASE]:[GetDailySchedule]:[success]:[COOKIE=%s]", cookie)
 	return dailyScheduleData, nil
 }
 
@@ -256,7 +257,7 @@ func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.E
 	// Prepare the request
 	req, err := http.NewRequest("GET", examScheduleUrl, nil)
 	if err != nil {
-		log.Err(err).Msg("error create request to get exam schedule" + err.Error())
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[GetExamSchedule]:[create request to get exam schedule]:[COOKIE=%s]:[ERROR_INFO=%v]", cookie, err)
 		return nil, err
 	}
 	// Set request headers
@@ -269,7 +270,7 @@ func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.E
 	// Send the request
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Err(err).Msg("error send request to get exam schedule: " + err.Error())
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[GetExamSchedule]:[send request to get exam schedule]:[COOKIE=%s]:[ERROR_INFO=%v]", cookie, err)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -278,29 +279,29 @@ func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.E
 		// [LOGOUT_CTMS]
 		err = us.LogoutCtms(ctx, cookie)
 		if err != nil {
-			log.Error().Err(err).Msgf("[ERROR]:[GetExamSchedule]:[error while login]:[COOKIE=%s]:[%v]", cookie, err)
+			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetExamSchedule]:[logout]:[COOKIE=%s]:[%v]", cookie, err)
 		}
-		log.Info().Msgf("[INFO]:[GetExamSchedule]:[logout successful]:[COOKIE=%s]", cookie)
 	}()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Err(err).Msg("error parse response to get exam schedule" + err.Error())
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[GetExamSchedule]:[goquery.NewDocumentFromReader(resp.Body)]:[COOKIE=%s]:[ERROR_INFO=%v]", cookie, err)
 		return nil, err
 	}
 
 	NoPermissionText := doc.Find(".NoPermission h3").Text()
 	if strings.TrimSpace(NoPermissionText) == SESSION_EXPIRED_MESSAGE {
 
-		log.Error().Msg("session expired")
-		return nil, errors.New("session expired")
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetExamSchedule]:[session expired]:[COOKIE=%s]", cookie)
+		return nil, errors.New(constants.SESSION_EXPIRED)
+
 	}
 
 	expiredNotiText := doc.Find("#leftcontent #thongbao").Text()
-	if strings.TrimSpace(expiredNotiText) == EXPIRED_CTMS {
+	if strings.TrimSpace(expiredNotiText) == constants.EXPIRED_CTMS {
 
-		log.Error().Msg("need to buy ctm")
-		return nil, errors.New("need to buy ctm")
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetExamSchedule]:[need to buy ctm]:[COOKIE=%s]", cookie)
+		return nil, errors.New(constants.NEED_TO_BUY_CTMS)
 	}
 
 	var examScheduleData []types.ExamSchedule
@@ -318,19 +319,20 @@ func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.E
 		}
 	})
 
+	log.Info().Msgf("[INFO]:[USECASE]:[GetExamSchedule]:[success]:[COOKIE=%s]", cookie)
 	return examScheduleData, nil
 }
 
 func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.LoginCtmsRequest) (types.GetUpcomingExamScheduleResponse, error) {
 	cookie, err := us.LoginCtms(ctx, user)
 	if err != nil {
-		log.Err(err).Msg("error login to get upcoming exam schedule")
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetUpcomingExamSchedule]:[login ctms]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
 		return types.GetUpcomingExamScheduleResponse{}, err
 	}
 
 	currentExamsSchedule, err := us.GetExamSchedule(ctx, cookie.Cookie)
 	if err != nil {
-		log.Err(err).Msg("error get exam schedule to get upcoming exam schedule")
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetUpcomingExamSchedule]:[us.GetExamSchedule(ctx, cookie.Cookie)]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
 		return types.GetUpcomingExamScheduleResponse{}, err
 	}
 
@@ -340,7 +342,7 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 
 	oldExamSchedule, err := us.examschedulesUS.FindExamSchedulesByUsername(ctx, filter)
 	if err != nil {
-		log.Err(err).Msg("error get exam schedule to get upcoming exam schedule")
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetUpcomingExamSchedule]:[us.examschedulesUS.FindExamSchedulesByUsername(ctx, filter)]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
 		return types.GetUpcomingExamScheduleResponse{}, err
 	}
 
@@ -351,7 +353,7 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 		}
 		_, err := us.examschedulesUS.CreateNewExamSchedules(ctx, examSchedules)
 		if err != nil {
-			log.Err(err).Msg("error create new exam schedule to get upcoming exam schedule")
+			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetUpcomingExamSchedule]:[us.examschedulesUS.CreateNewExamSchedules(ctx, examSchedules)]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
 			return types.GetUpcomingExamScheduleResponse{
 				CurrentExamsSchedules: currentExamsSchedule,
 				OldExamsSchedules:     nil,
@@ -364,6 +366,7 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 		}, nil
 	}
 
+	log.Info().Msgf("[INFO]:[USECASE]:[GetUpcomingExamSchedule]:[success]:[INFO=%s]", user.Username)
 	return types.GetUpcomingExamScheduleResponse{
 		CurrentExamsSchedules: currentExamsSchedule,
 		OldExamsSchedules:     oldExamSchedule.Subjects,
@@ -374,7 +377,7 @@ func (us *CtmsUS) SendChangedExamScheduleAndNewExamScheduleToUser(ctx context.Co
 
 	data, err := us.GetUpcomingExamSchedule(ctx, user)
 	if err != nil {
-		log.Err(err).Msg("error get upcoming exam schedule to send to user")
+		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[SendChangedExamScheduleAndNewExamScheduleToUser]:[us.GetUpcomingExamSchedule(ctx, user)]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
 		return err
 	}
 

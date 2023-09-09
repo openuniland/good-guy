@@ -12,6 +12,7 @@ type User struct {
 	IsTrackTimetable    bool               `bson:"is_track_timetable" json:"is_track_timetable"`
 	IsExamDay           bool               `bson:"is_exam_day" json:"is_exam_day"`
 	IsDeleted           bool               `bson:"is_deleted" json:"is_deleted" default:"false"`
+	IsDisabled          bool               `bson:"is_disabled" json:"is_disabled" default:"false"`
 	CreatedAt           primitive.DateTime `bson:"created_at" json:"created_at"`
 	UpdatedAt           primitive.DateTime `bson:"updated_at" json:"updated_at"`
 }

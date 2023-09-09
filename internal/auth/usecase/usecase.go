@@ -28,8 +28,9 @@ func NewAuthUseCase(cfg *configs.Configs, ctmsUC ctms.UseCase, userUC users.UseC
 
 func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest) error {
 	user := &types.LoginCtmsRequest{
-		Username: loginRequest.Username,
-		Password: loginRequest.Password,
+		Username:     loginRequest.Username,
+		Password:     loginRequest.Password,
+		SubscribedID: loginRequest.Id,
 	}
 	res, err := a.ctmsUC.LoginCtms(ctx, user)
 	if err != nil {
@@ -68,7 +69,7 @@ func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest) e
 		_, err := a.userUC.CreateNewUser(ctx, newUser)
 
 		if err != nil {
-			log.Error().Err(err).Msg("[User not exist]error creating new user")
+			log.Error().Err(err).Msg("[User not exist] error creating new user")
 			return err
 		}
 	}

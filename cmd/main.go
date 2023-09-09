@@ -24,18 +24,18 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	log.Info().Msgf("load configs success")
+	log.Info().Msgf("[INFO]:[main]:[configs loaded successfully]")
 
 	// Set the default time zone to "Asia/Ho_Chi_Minh"
 	loc := time.FixedZone("GMT+7", 7*60*60)
 	time.Local = loc
 	currentTime := time.Now()
-	fmt.Println("Current time in Vietnam:", currentTime.Format(time.RFC3339))
+	log.Info().Msgf("[INFO]:[main]:[set default time zone successfully]:[INFO=Current time in Vietnam: %s]", currentTime.Format(time.RFC3339))
 
 	mongo, err := mongodb.NewMongoDB(configs)
 
 	if err != nil {
-		log.Fatal().Err(err).Msg("cannot create mongodb client")
+		log.Fatal().Err(err).Msgf("[ERROR]:[main]:[cannot create mongodb client]:[ERROR_INFO=%v]", err)
 	}
 	defer mongo.Close()
 
@@ -46,11 +46,11 @@ func main() {
 func runGinServer(config *configs.Configs, mongo *mongodb.MongoDB) {
 	server, err := server.NewServer(config, mongo)
 	if err != nil {
-		log.Fatal().Err(err).Msg("cannot create server")
+		log.Fatal().Err(err).Msgf("[ERROR]:[runGinServer]:[cannot create server]:[ERROR_INFO=%v]", err)
 	}
 
 	err = server.Start(config.Server.HttpServerAddress)
 	if err != nil {
-		log.Fatal().Err(err).Msg("cannot start server")
+		log.Fatal().Err(err).Msgf("[ERROR]:[runGinServer]:[cannot start server]:[ERROR_INFO=%v]", err)
 	}
 }
