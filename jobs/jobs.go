@@ -33,18 +33,8 @@ func (j *Jobs) Run() {
 	// 	log.Info().Msgf("[JOBS]:[TEST]:[TIME=%v]", time.Now())
 	// })
 
-	c.AddFunc("0 0 23 * * *", func() {
-		log.Info().Msgf("[JOBS]:[0 0 23 * * *]:[TEST]:[TIME=%v]", time.Now())
-	})
-
-	c.AddFunc("0 20 22 * * *", func() {
-		log.Info().Msgf("[JOBS]:[0 20 22 * * *]:[TEST]:[TIME=%v]", time.Now())
-	})
-
-	// TEST
-
-	//every 10 minutes
-	c.AddFunc("*/600 * * * * *", func() {
+	//every 15 minutes
+	c.AddFunc("0 */15 * * * *", func() {
 		log.Info().Msgf("[JOBS]:[Start sync articles]:[TIME=%v]", time.Now())
 		go j.syncArticles()
 	})
