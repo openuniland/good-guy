@@ -30,7 +30,7 @@ func (j *Jobs) Run() {
 
 	// every 5 seconds
 	c.AddFunc("*/5 * * * * *", func() {
-		log.Info().Msgf("[JOBS]:[TEST]:[IIME=%v]", time.Now())
+		log.Info().Msgf("[JOBS]:[TEST]:[TIME=%v]", time.Now())
 		// go j.syncArticles()
 	})
 
