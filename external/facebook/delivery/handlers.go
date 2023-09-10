@@ -115,7 +115,7 @@ func (f *facebookHandlers) SendQuickReplies() gin.HandlerFunc {
 			return
 		}
 
-		err = f.facebookUC.SendQuickReplies(ctx, id, req.Text, &req.QuickReplies)
+		err = f.facebookUC.SendQuickReplies(ctx, id, req.Text, &req.QuickReplyRequest)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),

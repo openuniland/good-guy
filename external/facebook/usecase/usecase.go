@@ -72,7 +72,7 @@ func (us *FacebookUS) SendMessage(ctx context.Context, id string, message interf
 	return nil
 }
 
-func (us *FacebookUS) SendQuickReplies(ctx context.Context, id string, message string, quickReplies *[]types.QuickReply) error {
+func (us *FacebookUS) SendQuickReplies(ctx context.Context, id string, message string, quickReplies *[]types.QuickReplyRequest) error {
 	data := map[string]interface{}{
 		"recipient": map[string]string{
 			"id": id,

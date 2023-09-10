@@ -8,7 +8,7 @@ import (
 
 type UseCase interface {
 	SendMessage(ctx context.Context, id string, message interface{}) error
-	SendQuickReplies(ctx context.Context, id string, message string, quickReplies *[]types.QuickReply) error
+	SendQuickReplies(ctx context.Context, id string, message string, quickReplies *[]types.QuickReplyRequest) error
 	SendButtonMessage(ctx context.Context, id string, input *types.SendButtonMessageRequest) error
 	SendTextMessage(ctx context.Context, id string, text string) error
 }

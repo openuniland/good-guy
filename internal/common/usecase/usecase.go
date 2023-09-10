@@ -245,17 +245,12 @@ func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.Faceb
 		return nil
 	}
 
-	if len(data.Entry) == 0 {
-		log.Error().Msg("error entry is empty")
-		return nil
-	}
-
 	messaging := data.Entry[0].Messaging
 
-	for _, message := range messaging {
-		sender := message.Sender
-		postback := message.Postback
-		msg := message.Message
+	for _, element := range messaging {
+		sender := element.Sender
+		postback := element.Postback
+		msg := element.Message
 
 		id := sender.ID
 
@@ -268,7 +263,7 @@ func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.Faceb
 				us.facebookUS.SendTextMessage(ctx, id, utils.HelpScript())
 				return nil
 			case "CTMS_SERVICE":
-				us.facebookUS.SendQuickReplies(ctx, id, "Chọn một câu trả lời:", &[]types.QuickReply{{
+				us.facebookUS.SendQuickReplies(ctx, id, "Chọn một câu trả lời:", &[]types.QuickReplyRequest{{
 					ContentType: "text",
 					Title:       "Thêm tài khoản CTMS",
 					Payload:     "ADD_CTMS_ACCOUNT",
@@ -281,7 +276,7 @@ func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.Faceb
 				}})
 				return nil
 			case "FITHOU_CRAWL_SERVICE":
-				us.facebookUS.SendQuickReplies(ctx, id, "Chọn một câu trả lời:", &[]types.QuickReply{{
+				us.facebookUS.SendQuickReplies(ctx, id, "Chọn một câu trả lời:", &[]types.QuickReplyRequest{{
 					ContentType: "text",
 					Title:       "Bật thông báo",
 					Payload:     "ADD_FITHOU_CRAWL_SERVICE",
@@ -294,7 +289,7 @@ func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.Faceb
 				}})
 				return nil
 			case "CTMS_CREDITS_SERVICE":
-				us.facebookUS.SendQuickReplies(ctx, id, "Chọn một câu trả lời:", &[]types.QuickReply{{
+				us.facebookUS.SendQuickReplies(ctx, id, "Chọn một câu trả lời:", &[]types.QuickReplyRequest{{
 					ContentType: "text",
 					Title:       "Bật theo dõi",
 					Payload:     "ADD_CTMS_CREDITS_SERVICE",
@@ -307,7 +302,7 @@ func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.Faceb
 				}})
 				return nil
 			case "CTMS_TIMETABLE_SERVICE":
-				us.facebookUS.SendQuickReplies(ctx, id, "Chọn một câu trả lời:", &[]types.QuickReply{{
+				us.facebookUS.SendQuickReplies(ctx, id, "Chọn một câu trả lời:", &[]types.QuickReplyRequest{{
 					ContentType: "text",
 					Title:       "Bật thông báo",
 					Payload:     "ADD_CTMS_TIMETABLE_SERVICE",
@@ -324,8 +319,10 @@ func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.Faceb
 			}
 		} else if msg != nil {
 
-			if msg.QuickReply.Payload != "" {
-				switch msg.QuickReply.Payload {
+			quickReply := msg.QuickReply
+
+			if quickReply != nil {
+				switch quickReply.Payload {
 				case "ADD_CTMS_ACCOUNT":
 					us.SendLoginCtmsButton(ctx, id)
 					return nil
