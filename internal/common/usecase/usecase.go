@@ -33,21 +33,14 @@ func (us *CommonUS) GetNotificationOfExamSchedule(ctx context.Context, id string
 	filter := bson.M{"subscribed_id": id}
 	update := bson.M{"is_exam_day": true}
 
-	user, err := us.userUC.FindOneAndUpdateUser(ctx, filter, update)
+	_, err := us.userUC.FindOneAndUpdateUser(ctx, filter, update)
 	if err != nil {
 		log.Error().Err(err).Msg("error find one and update user")
+		us.facebookUS.SendTextMessage(ctx, id, "❗️ Bạn chưa thêm tài khoản CTMS vào hệ thống.")
 		return err
 	}
 
-	if user.IsTrackTimetable {
-		us.facebookUS.SendTextMessage(ctx, id, "🔔 Bật chức năng thông báo lịch thi thành công!")
-		return nil
-	}
-
-	if user == nil {
-		us.facebookUS.SendTextMessage(ctx, id, "❗️ Bạn chưa thêm tài khoản CTMS vào hệ thống.")
-		return nil
-	}
+	us.facebookUS.SendTextMessage(ctx, id, "🔔 Bật chức năng thông báo lịch thi thành công!")
 
 	return nil
 }
@@ -56,22 +49,14 @@ func (us *CommonUS) CancelGetNotificationOfExamSchedule(ctx context.Context, id 
 	filter := bson.M{"subscribed_id": id}
 	update := bson.M{"is_exam_day": false}
 
-	user, err := us.userUC.FindOneAndUpdateUser(ctx, filter, update)
+	_, err := us.userUC.FindOneAndUpdateUser(ctx, filter, update)
 	if err != nil {
 		log.Error().Err(err).Msg("error find one and update user")
+		us.facebookUS.SendTextMessage(ctx, id, "❗️ Bạn chưa thêm tài khoản CTMS vào hệ thống.")
 		return err
 	}
 
-	if !user.IsTrackTimetable {
-		us.facebookUS.SendTextMessage(ctx, id, "🔕 Đã tắt chức năng thông báo lịch thi!")
-		return nil
-	}
-
-	if user == nil {
-		us.facebookUS.SendTextMessage(ctx, id, "❗️ Bạn chưa thêm tài khoản CTMS vào hệ thống.")
-		return nil
-	}
-
+	us.facebookUS.SendTextMessage(ctx, id, "🔕 Đã tắt chức năng thông báo lịch thi!")
 	return nil
 }
 
@@ -80,22 +65,14 @@ func (us *CommonUS) AddCtmsTimetableService(ctx context.Context, id string) erro
 	filter := bson.M{"subscribed_id": id}
 	update := bson.M{"is_track_timetable": true}
 
-	user, err := us.userUC.FindOneAndUpdateUser(ctx, filter, update)
+	_, err := us.userUC.FindOneAndUpdateUser(ctx, filter, update)
 	if err != nil {
 		log.Error().Err(err).Msg("error find one and update user")
+		us.facebookUS.SendTextMessage(ctx, id, "❗️ Bạn chưa thêm tài khoản CTMS vào hệ thống.")
 		return err
 	}
 
-	if user.IsTrackTimetable {
-		us.facebookUS.SendTextMessage(ctx, id, "🔔 Bật chức năng thông báo lịch học hàng ngày thành công!")
-		return nil
-	}
-
-	if user == nil {
-		us.facebookUS.SendTextMessage(ctx, id, "❗️ Bạn chưa thêm tài khoản CTMS vào hệ thống.")
-		return nil
-	}
-
+	us.facebookUS.SendTextMessage(ctx, id, "🔔 Bật chức năng thông báo lịch học hàng ngày thành công!")
 	return nil
 
 }
@@ -105,22 +82,14 @@ func (us *CommonUS) RemoveCtmsTimetableService(ctx context.Context, id string) e
 	filter := bson.M{"subscribed_id": id}
 	update := bson.M{"is_track_timetable": false}
 
-	user, err := us.userUC.FindOneAndUpdateUser(ctx, filter, update)
+	_, err := us.userUC.FindOneAndUpdateUser(ctx, filter, update)
 	if err != nil {
 		log.Error().Err(err).Msg("error find one and update user")
+		us.facebookUS.SendTextMessage(ctx, id, "❗️ Bạn chưa thêm tài khoản CTMS vào hệ thống.")
 		return err
 	}
 
-	if !user.IsTrackTimetable {
-		us.facebookUS.SendTextMessage(ctx, id, "🔕 Đã tắt chức năng thông báo lịch học hàng ngày!")
-		return nil
-	}
-
-	if user == nil {
-		us.facebookUS.SendTextMessage(ctx, id, "❗️ Bạn chưa thêm tài khoản CTMS vào hệ thống.")
-		return nil
-	}
-
+	us.facebookUS.SendTextMessage(ctx, id, "🔕 Đã tắt chức năng thông báo lịch học hàng ngày!")
 	return nil
 
 }
@@ -223,7 +192,7 @@ func (us *CommonUS) ChatScript(ctx context.Context, id string, msg string) {
 		us.RemoveUser(ctx, id)
 		return
 	case utils.Command.Help:
-		us.facebookUS.SendTextMessage(ctx, id, utils.Command.Help)
+		us.facebookUS.SendTextMessage(ctx, id, utils.HelpScript())
 		return
 	case utils.Command.Examday:
 		us.GetNotificationOfExamSchedule(ctx, id)
