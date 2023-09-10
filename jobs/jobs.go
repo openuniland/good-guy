@@ -1,6 +1,8 @@
 package jobs
 
 import (
+	"time"
+
 	"github.com/openuniland/good-guy/configs"
 	"github.com/openuniland/good-guy/external/ctms"
 	"github.com/openuniland/good-guy/external/facebook"
@@ -28,12 +30,13 @@ func (j *Jobs) Run() {
 
 	// every 5 seconds
 	c.AddFunc("*/5 * * * * *", func() {
-		go j.syncArticles()
+		log.Info().Msgf("[JOBS]:[TEST]:[IIME=%v]", time.Now())
+		// go j.syncArticles()
 	})
 
 	//every 25 minutes
 	c.AddFunc("*/25 * * * *", func() {
-		log.Info().Msg("Running syncArticles")
+		log.Info().Msgf("[JOBS]:[Start sync articles]:[TIME=%v]", time.Now())
 		go j.syncArticles()
 	})
 
