@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var collectionName = "test_users"
+var collectionName = "users"
 
 type userRepo struct {
 	cfg     *configs.Configs

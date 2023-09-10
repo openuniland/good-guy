@@ -14,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var collectionName = "test_articles"
+var collectionName = "articles"
 
 type articleRepo struct {
 	mongodb *mongodb.MongoDB
