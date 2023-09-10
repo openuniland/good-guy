@@ -239,6 +239,15 @@ func (us *CommonUS) ChatScript(ctx context.Context, id string, msg string) {
 }
 
 func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.FacebookWebhookRequest) error {
+
+	if data.Object != "page" {
+		return nil
+	}
+
+	if len(data.Entry) == 0 {
+		return nil
+	}
+
 	messaging := data.Entry[0].Messaging
 
 	for _, message := range messaging {

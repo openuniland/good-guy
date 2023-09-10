@@ -41,7 +41,7 @@ func (c *commonHandlers) HandleFacebookWebhook() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, "EVENT_RECEIVED")
+		ctx.Writer.Write([]byte("EVENT_RECEIVED"))
 	}
 }
 
@@ -59,7 +59,7 @@ func (c *commonHandlers) VerifyFacebookWebhook() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, res)
+		ctx.Writer.Write([]byte(res))
 
 	}
 }
