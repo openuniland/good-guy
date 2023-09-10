@@ -200,6 +200,9 @@ func (us *CommonUS) ChatScript(ctx context.Context, id string, msg string) {
 	case utils.Command.UnExamday:
 		us.CancelGetNotificationOfExamSchedule(ctx, id)
 		return
+	case utils.Command.ForceLogout:
+		//
+		return
 	default:
 		us.facebookUS.SendTextMessage(ctx, id, "Bot ngu ngok quá, không hiểu gì hết :(. "+"\n"+" /help để biết thêm chi tiết!")
 		return

@@ -11,17 +11,19 @@ func HelpScript() string {
 }
 
 type CommandType struct {
-	Login     string
-	Remove    string
-	Help      string
-	Examday   string
-	UnExamday string
+	Login       string
+	Remove      string
+	Help        string
+	Examday     string
+	UnExamday   string
+	ForceLogout string
 }
 
 var Command = CommandType{
-	Login:     "/login",
-	Remove:    "/remove",
-	Help:      "/help",
-	Examday:   "/examday",
-	UnExamday: "/un_examday",
+	Login:       "/login",
+	Remove:      "/remove",
+	Help:        "/help",
+	Examday:     "/examday",
+	UnExamday:   "/un_examday",
+	ForceLogout: "/force_logout",
 }

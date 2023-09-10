@@ -10,6 +10,7 @@ import (
 	articleHttp "github.com/openuniland/good-guy/internal/articles/delivery"
 	authHttp "github.com/openuniland/good-guy/internal/auth/delivery"
 	commonHttp "github.com/openuniland/good-guy/internal/common/delivery"
+	cookieHttp "github.com/openuniland/good-guy/internal/cookies/delivery"
 	examSchedulesHttp "github.com/openuniland/good-guy/internal/exam_schedules/delivery"
 	"github.com/openuniland/good-guy/internal/middlewares"
 	userHttp "github.com/openuniland/good-guy/internal/users/delivery"
@@ -21,10 +22,12 @@ import (
 	articleUS "github.com/openuniland/good-guy/internal/articles/usecase"
 	authUC "github.com/openuniland/good-guy/internal/auth/usecase"
 	commonUC "github.com/openuniland/good-guy/internal/common/usecase"
+	cookieUS "github.com/openuniland/good-guy/internal/cookies/usecase"
 	examSchedulesUS "github.com/openuniland/good-guy/internal/exam_schedules/usecase"
 	userUS "github.com/openuniland/good-guy/internal/users/usecase"
 
 	articleRepo "github.com/openuniland/good-guy/internal/articles/repository"
+	cookieRepo "github.com/openuniland/good-guy/internal/cookies/repository"
 	examSchedulesRepo "github.com/openuniland/good-guy/internal/exam_schedules/repository"
 	userRepo "github.com/openuniland/good-guy/internal/users/repository"
 	cors "github.com/rs/cors/wrapper/gin"
@@ -43,8 +46,10 @@ func (server *Server) MapHandlers() {
 	articleRepo := articleRepo.NewArticleRepository(server.configs, server.mongo)
 	userRepo := userRepo.NewUserRepository(server.configs, server.mongo)
 	examSchedulesRepo := examSchedulesRepo.NewExamSchedulesRepository(server.configs, server.mongo)
+	cookieRepo := cookieRepo.NewCookieRepository(server.configs, server.mongo)
 
 	// Init useCases
+	cookieUC := cookieUS.NewCookieUseCase(server.configs, cookieRepo)
 	fithouUS := fithouUS.NewFithouUseCase(server.configs)
 	articleUS := articleUS.NewArticleUseCase(server.configs, articleRepo, fithouUS)
 	facebookUS := facebookUS.NewFacebookUseCase(server.configs)
@@ -63,6 +68,7 @@ func (server *Server) MapHandlers() {
 	examSchedulesHandlers := examSchedulesHttp.NewExamSchedulesHandlers(server.configs, examSchedulesUS)
 	authHandlers := authHttp.NewCtmsHandlers(server.configs, authUC)
 	commonHandlers := commonHttp.NewCommonHandlers(server.configs, commonUC)
+	cookieHandlers := cookieHttp.NewCookieHandlers(server.configs, cookieUC)
 
 	// Init middlewares
 	mw := middlewares.NewMiddlewareManager(server.configs)
@@ -93,6 +99,7 @@ func (server *Server) MapHandlers() {
 	examSchedules := v1.Group("/exam-schedules")
 	auth := v1.Group("/auth")
 	common := v1.Group("/common")
+	cookie := v1.Group("/cookies")
 
 	health.GET("/ping", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
@@ -109,6 +116,7 @@ func (server *Server) MapHandlers() {
 	examSchedulesHttp.MapExamSchedulesRoutes(examSchedules, examSchedulesHandlers, mw)
 	commonHttp.MapCommonRoutes(common, commonHandlers)
 	authHttp.MapAuthRoutes(auth, authHandlers)
+	cookieHttp.MapCookieRoutes(cookie, cookieHandlers, mw)
 
 	server.router = router
 }
