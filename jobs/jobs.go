@@ -29,19 +29,28 @@ func (j *Jobs) Run() {
 	c := cron.New(cron.WithSeconds())
 
 	// every 5 seconds
-	c.AddFunc("*/5 * * * * *", func() {
-		log.Info().Msgf("[JOBS]:[TEST]:[TIME=%v]", time.Now())
-		// go j.syncArticles()
+	// c.AddFunc("*/5 * * * * *", func() {
+	// 	log.Info().Msgf("[JOBS]:[TEST]:[TIME=%v]", time.Now())
+	// })
+
+	c.AddFunc("0 0 23 * * *", func() {
+		log.Info().Msgf("[JOBS]:[0 0 23 * * *]:[TEST]:[TIME=%v]", time.Now())
 	})
 
-	//every 25 minutes
-	c.AddFunc("*/25 * * * *", func() {
+	c.AddFunc("0 20 22 * * *", func() {
+		log.Info().Msgf("[JOBS]:[0 20 22 * * *]:[TEST]:[TIME=%v]", time.Now())
+	})
+
+	// TEST
+
+	//every 10 minutes
+	c.AddFunc("*/600 * * * * *", func() {
 		log.Info().Msgf("[JOBS]:[Start sync articles]:[TIME=%v]", time.Now())
 		go j.syncArticles()
 	})
 
 	//20h every day
-	c.AddFunc("0 20 * * *", func() {
+	c.AddFunc("0 0 20 * * *", func() {
 		log.Info().Msg("Running getUpcomingExamSchedule")
 		go j.getUpcomingExamSchedule()
 	})
