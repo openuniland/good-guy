@@ -241,10 +241,12 @@ func (us *CommonUS) ChatScript(ctx context.Context, id string, msg string) {
 func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.FacebookWebhookRequest) error {
 
 	if data.Object != "page" {
+		log.Error().Msg("error object is not page")
 		return nil
 	}
 
 	if len(data.Entry) == 0 {
+		log.Error().Msg("error entry is empty")
 		return nil
 	}
 
@@ -257,7 +259,7 @@ func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.Faceb
 
 		id := sender.ID
 
-		if postback.Payload != "" {
+		if postback != nil {
 			switch postback.Payload {
 			case "GET_STARTED":
 				us.facebookUS.SendTextMessage(ctx, id, "Chào mừng bạn đến với Fithou BOT. Chúc bạn có một trải nghiệm zui zẻ :D. /help để biết thêm chi tiết!")
@@ -320,37 +322,40 @@ func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.Faceb
 			default:
 				return nil
 			}
-		} else if msg.QuickReply.Payload != "" {
-			switch msg.QuickReply.Payload {
-			case "ADD_CTMS_ACCOUNT":
-				us.SendLoginCtmsButton(ctx, id)
-				return nil
-			case "REMOVE_CTMS_ACCOUNT":
-				us.RemoveUser(ctx, id)
-				return nil
-			case "ADD_FITHOU_CRAWL_SERVICE":
-				us.AddFithouCrawlService(ctx, id)
-				return nil
-			case "REMOVE_FITHOU_CRAWL_SERVICE":
-				us.RemoveFithouCrawlService(ctx, id)
-				return nil
-			case "ADD_CTMS_CREDITS_SERVICE":
-				us.facebookUS.SendTextMessage(ctx, id, "Chức năng dành cho quản trị viên!")
-				return nil
-			case "REMOVE_CTMS_CREDITS_SERVICE":
-				us.facebookUS.SendTextMessage(ctx, id, "Chức năng dành cho quản trị viên!")
-				return nil
-			case "ADD_CTMS_TIMETABLE_SERVICE":
-				us.AddCtmsTimetableService(ctx, id)
-				return nil
-			case "REMOVE_CTMS_TIMETABLE_SERVICE":
-				us.RemoveCtmsTimetableService(ctx, id)
-				return nil
-			default:
-				return nil
+		} else if msg != nil {
+
+			if msg.QuickReply.Payload != "" {
+				switch msg.QuickReply.Payload {
+				case "ADD_CTMS_ACCOUNT":
+					us.SendLoginCtmsButton(ctx, id)
+					return nil
+				case "REMOVE_CTMS_ACCOUNT":
+					us.RemoveUser(ctx, id)
+					return nil
+				case "ADD_FITHOU_CRAWL_SERVICE":
+					us.AddFithouCrawlService(ctx, id)
+					return nil
+				case "REMOVE_FITHOU_CRAWL_SERVICE":
+					us.RemoveFithouCrawlService(ctx, id)
+					return nil
+				case "ADD_CTMS_CREDITS_SERVICE":
+					us.facebookUS.SendTextMessage(ctx, id, "Chức năng dành cho quản trị viên!")
+					return nil
+				case "REMOVE_CTMS_CREDITS_SERVICE":
+					us.facebookUS.SendTextMessage(ctx, id, "Chức năng dành cho quản trị viên!")
+					return nil
+				case "ADD_CTMS_TIMETABLE_SERVICE":
+					us.AddCtmsTimetableService(ctx, id)
+					return nil
+				case "REMOVE_CTMS_TIMETABLE_SERVICE":
+					us.RemoveCtmsTimetableService(ctx, id)
+					return nil
+				default:
+					return nil
+				}
+			} else {
+				us.ChatScript(ctx, id, msg.Text)
 			}
-		} else if msg.Text != "" {
-			us.ChatScript(ctx, id, msg.Text)
 
 		}
 	}

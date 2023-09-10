@@ -1,12 +1,14 @@
 package http
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/openuniland/good-guy/configs"
 	"github.com/openuniland/good-guy/external/types"
 	"github.com/openuniland/good-guy/internal/common"
+	"github.com/rs/zerolog/log"
 )
 
 type commonHandlers struct {
@@ -25,6 +27,16 @@ func (c *commonHandlers) HandleFacebookWebhook() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var message *types.FacebookWebhookRequest
 
+		body, err := io.ReadAll(ctx.Request.Body)
+		if err != nil {
+			log.Error().Msgf("HandleFacebookWebhook %v", err.Error())
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+		log.Info().Msgf("HandleFacebookWebhook %v", string(body))
+
 		if err := ctx.ShouldBindJSON(&message); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
@@ -32,7 +44,7 @@ func (c *commonHandlers) HandleFacebookWebhook() gin.HandlerFunc {
 			return
 		}
 
-		err := c.commonUC.HandleFacebookWebhook(ctx, message)
+		err = c.commonUC.HandleFacebookWebhook(ctx, message)
 
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
