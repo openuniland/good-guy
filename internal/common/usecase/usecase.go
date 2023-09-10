@@ -351,6 +351,7 @@ func (us *CommonUS) HandleFacebookWebhook(ctx context.Context, data *types.Faceb
 					return nil
 				}
 			} else {
+				log.Info().Msgf("Start chat script: %v", msg.Text)
 				us.ChatScript(ctx, id, msg.Text)
 			}
 

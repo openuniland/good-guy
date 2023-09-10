@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 
@@ -29,17 +30,19 @@ func (c *commonHandlers) HandleFacebookWebhook() gin.HandlerFunc {
 
 		body, err := io.ReadAll(ctx.Request.Body)
 		if err != nil {
-			log.Error().Msgf("HandleFacebookWebhook %v", err.Error())
+			log.Err(err).Msgf("[ERROR]:[HANDLERS]:[HandleFacebookWebhook]:[ERROR_INFO=%v]", err)
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
 			})
 			return
 		}
-		log.Info().Msgf("HandleFacebookWebhook %v", string(body))
 
-		if err := ctx.ShouldBindJSON(&message); err != nil {
+		log.Info().Msgf("[INFO]:[HANDLERS]:[HandleFacebookWebhook]:[BODY=%v]", string(body))
+
+		if err := json.Unmarshal(body, &message); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
+				"message":    err.Error(),
+				"error_code": "json_unmarshal",
 			})
 			return
 		}
