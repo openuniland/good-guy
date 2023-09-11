@@ -11,6 +11,7 @@ import (
 	"github.com/openuniland/good-guy/external/types"
 	"github.com/openuniland/good-guy/internal/articles"
 	"github.com/openuniland/good-guy/internal/common"
+	"github.com/openuniland/good-guy/internal/cookies"
 	"github.com/openuniland/good-guy/internal/users"
 	"github.com/openuniland/good-guy/pkg/utils"
 	"github.com/rs/zerolog/log"
@@ -23,10 +24,11 @@ type CommonUS struct {
 	ctmsUC     ctms.UseCase
 	userUC     users.UseCase
 	articleUC  articles.UseCase
+	cookieUC   cookies.UseCase
 }
 
-func NewCommonUseCase(cfg *configs.Configs, facebookUS facebook.UseCase, ctmsUC ctms.UseCase, userUC users.UseCase, articleUC articles.UseCase) common.UseCase {
-	return &CommonUS{cfg: cfg, facebookUS: facebookUS, ctmsUC: ctmsUC, userUC: userUC, articleUC: articleUC}
+func NewCommonUseCase(cfg *configs.Configs, facebookUS facebook.UseCase, ctmsUC ctms.UseCase, userUC users.UseCase, articleUC articles.UseCase, cookieUC cookies.UseCase) common.UseCase {
+	return &CommonUS{cfg: cfg, facebookUS: facebookUS, ctmsUC: ctmsUC, userUC: userUC, articleUC: articleUC, cookieUC: cookieUC}
 }
 
 func (us *CommonUS) GetNotificationOfExamSchedule(ctx context.Context, id string) error {
@@ -201,7 +203,7 @@ func (us *CommonUS) ChatScript(ctx context.Context, id string, msg string) {
 		us.CancelGetNotificationOfExamSchedule(ctx, id)
 		return
 	case utils.Command.ForceLogout:
-		//
+		us.ctmsUC.ForceLogout(ctx, id)
 		return
 	default:
 		us.facebookUS.SendTextMessage(ctx, id, "Bot ngu ngok quá, không hiểu gì hết :(. "+"\n"+" /help để biết thêm chi tiết!")

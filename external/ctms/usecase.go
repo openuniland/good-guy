@@ -13,4 +13,5 @@ type UseCase interface {
 	GetExamSchedule(ctx context.Context, cookie string) ([]types.ExamSchedule, error)
 	GetUpcomingExamSchedule(ctx context.Context, user *types.LoginCtmsRequest) (types.GetUpcomingExamScheduleResponse, error)
 	SendChangedExamScheduleAndNewExamScheduleToUser(ctx context.Context, user *types.LoginCtmsRequest, id string) error
+	ForceLogout(ctx context.Context, subscribed_id string) error
 }

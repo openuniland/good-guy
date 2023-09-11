@@ -91,8 +91,12 @@ func (c *CtmsUS) LoginCtms(ctx context.Context, user *types.LoginCtmsRequest) (*
 	go func() {
 		filter := bson.M{"username": user.Username}
 		pushUpdate := bson.M{
-			"$push": bson.M{"cookies": cookie},
-			"$set":  bson.M{"updated_at": primitive.NewDateTimeFromTime(time.Now())},
+			"$push": bson.M{
+				"cookies": cookie,
+			},
+			"$set": bson.M{
+				"updated_at": primitive.NewDateTimeFromTime(time.Now()),
+			},
 		}
 
 		err = c.cookieUC.UpdateSertCookie(ctx, filter, pushUpdate)
@@ -455,5 +459,46 @@ func (c *CtmsUS) SendChangedExamScheduleAndNewExamScheduleToUser(ctx context.Con
 			}
 		}(i)
 	}
+	return nil
+}
+
+func (c *CtmsUS) ForceLogout(ctx context.Context, subscribedId string) error {
+
+	user, err := c.userUS.GetUserBySubscribedId(ctx, subscribedId)
+	if err != nil {
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[ForceLogout]:[get user by id]:[INFO=%s]:[ERROR_INFO=%v]", subscribedId, err)
+	}
+
+	cookie, err := c.cookieUC.FindOneCookie(ctx, user.Username)
+	if err != nil {
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[ForceLogout]:[get cookie by username]:[ID=%v, INFO=%s]:[ERROR_INFO=%v]", subscribedId, user.Username, err)
+	}
+
+	for _, v := range cookie.Cookies {
+		go func(cc string) {
+			err = c.LogoutCtms(ctx, cc)
+			if err != nil {
+				log.Err(err).Msgf("[ERROR]:[USECASE]:[ForceLogout]:[logout ctms]:[ID=%v, INFO=%s]:[ERROR_INFO=%v]", subscribedId, user.Username, err)
+			}
+		}(v)
+	}
+
+	filter := bson.M{
+		"username": user.Username,
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"username":   user.Username,
+			"cookies":    []string{""},
+			"updated_at": primitive.NewDateTimeFromTime(time.Now()),
+		},
+	}
+
+	err = c.cookieUC.UpdateSertCookie(ctx, filter, update)
+	if err != nil {
+		log.Err(err).Msgf("[ERROR]:[USECASE]:[ForceLogout]:[update cookie]:[ID=%v, INFO=%s]:[ERROR_INFO=%v]", subscribedId, user.Username, err)
+	}
+
+	log.Info().Msgf("[INFO]:[USECASE]:[ForceLogout]:[success]:[ID=%v, INFO=%s]", subscribedId, user.Username)
 	return nil
 }

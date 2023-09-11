@@ -57,7 +57,7 @@ func (server *Server) MapHandlers() {
 	userUS := userUS.NewUserUseCase(server.configs, userRepo)
 	ctmsUC := ctmsUS.NewCtmsUseCase(server.configs, examSchedulesUS, facebookUS, userUS, cookieUC)
 	authUC := authUC.NewAuthUseCase(server.configs, ctmsUC, userUS, facebookUS, cookieUC)
-	commonUC := commonUC.NewCommonUseCase(server.configs, facebookUS, ctmsUC, userUS, articleUS)
+	commonUC := commonUC.NewCommonUseCase(server.configs, facebookUS, ctmsUC, userUS, articleUS, cookieUC)
 
 	// Init handlers
 	authCtmsHandlers := ctmsHttp.NewCtmsHandlers(server.configs, ctmsUC)

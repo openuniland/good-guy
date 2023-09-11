@@ -79,16 +79,7 @@ func (c *cookieRepo) UpdateSertOne(ctx context.Context, filter bson.M, update bs
 	dbName := c.cfg.MongoDB.MongoDBName
 	coll := c.mongodb.Client.Database(dbName).Collection(collectionName)
 
-	update["updated_at"] = primitive.NewDateTimeFromTime(time.Now())
-
-	dataUpsert := bson.M{
-		"$set": update,
-		"$setOnInsert": bson.M{
-			"created_at": primitive.NewDateTimeFromTime(time.Now()),
-			"username":   update["username"],
-			"cookies":    update["cookies"],
-		}}
 	upsert := true
 	opts := options.Update().SetUpsert(upsert)
-	return coll.UpdateOne(ctx, filter, dataUpsert, opts)
+	return coll.UpdateOne(ctx, filter, update, opts)
 }
