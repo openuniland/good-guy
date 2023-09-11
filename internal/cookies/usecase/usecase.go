@@ -46,9 +46,9 @@ func (c *CookieUS) FindOneCookie(ctx context.Context, username string) (*models.
 	return cookie, nil
 }
 
-func (c *CookieUS) UpdateCookie(ctx context.Context, filter bson.M, update bson.M) error {
+func (c *CookieUS) UpdateSertCookie(ctx context.Context, filter bson.M, update bson.M) error {
 
-	_, err := c.cookieRepo.UpdateOne(ctx, filter, update)
+	_, err := c.cookieRepo.UpdateSertOne(ctx, filter, update)
 	if err != nil {
 		log.Err(err).Msgf("[ERROR]:[USECASE]:[UpdateCookie]:[FILTER=%v, UPDATE=%v]:[ERROR_INFO=%v]", filter, update, err)
 		return err

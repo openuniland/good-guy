@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/openuniland/good-guy/configs"
@@ -17,12 +18,14 @@ import (
 	"github.com/openuniland/good-guy/external/ctms"
 	"github.com/openuniland/good-guy/external/facebook"
 	"github.com/openuniland/good-guy/external/types"
+	"github.com/openuniland/good-guy/internal/cookies"
 	examschedules "github.com/openuniland/good-guy/internal/exam_schedules"
 	"github.com/openuniland/good-guy/internal/models"
 	"github.com/openuniland/good-guy/internal/users"
 	"github.com/openuniland/good-guy/pkg/utils"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const loginUrl = "/login.aspx"
@@ -35,14 +38,15 @@ type CtmsUS struct {
 	examschedulesUS examschedules.UseCase
 	facebookUS      facebook.UseCase
 	userUS          users.UseCase
+	cookieUC        cookies.UseCase
 }
 
-func NewCtmsUseCase(cfg *configs.Configs, examschedulesUS examschedules.UseCase, facebookUS facebook.UseCase, userUS users.UseCase) ctms.UseCase {
-	return &CtmsUS{cfg: cfg, examschedulesUS: examschedulesUS, facebookUS: facebookUS, userUS: userUS}
+func NewCtmsUseCase(cfg *configs.Configs, examschedulesUS examschedules.UseCase, facebookUS facebook.UseCase, userUS users.UseCase, cookieUC cookies.UseCase) ctms.UseCase {
+	return &CtmsUS{cfg: cfg, examschedulesUS: examschedulesUS, facebookUS: facebookUS, userUS: userUS, cookieUC: cookieUC}
 }
 
-func (us *CtmsUS) LoginCtms(ctx context.Context, user *types.LoginCtmsRequest) (*types.LoginCtmsResponse, error) {
-	ctmsUrl := us.cfg.UrlCrawlerList.CtmsUrl
+func (c *CtmsUS) LoginCtms(ctx context.Context, user *types.LoginCtmsRequest) (*types.LoginCtmsResponse, error) {
+	ctmsUrl := c.cfg.UrlCrawlerList.CtmsUrl
 
 	hash := md5.Sum([]byte(user.Password))
 	hashString := hex.EncodeToString(hash[:])
@@ -84,6 +88,20 @@ func (us *CtmsUS) LoginCtms(ctx context.Context, user *types.LoginCtmsRequest) (
 	defer resp.Body.Close()
 	cookie := resp.Header.Get("Set-Cookie")
 
+	go func() {
+		filter := bson.M{"username": user.Username}
+		pushUpdate := bson.M{
+			"$push": bson.M{"cookies": cookie},
+			"$set":  bson.M{"updated_at": primitive.NewDateTimeFromTime(time.Now())},
+		}
+
+		err = c.cookieUC.UpdateSertCookie(ctx, filter, pushUpdate)
+		if err != nil {
+			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginCtms]:[error while update cookie]:[INFO=%s]:[%v]", user.Username, err)
+			return
+		}
+	}()
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginCtms]:[io.ReadAll(resp.Body)]:[INFO=%s]:[%v]", user.Username, err)
@@ -109,8 +127,8 @@ func (us *CtmsUS) LoginCtms(ctx context.Context, user *types.LoginCtmsRequest) (
 
 }
 
-func (us *CtmsUS) LogoutCtms(ctx context.Context, cookie string) error {
-	ctmsUrl := us.cfg.UrlCrawlerList.CtmsUrl
+func (c *CtmsUS) LogoutCtms(ctx context.Context, cookie string) error {
+	ctmsUrl := c.cfg.UrlCrawlerList.CtmsUrl
 
 	data := url.Values{
 		"__VIEWSTATE":          {"/wEPDwUJNjgxODI3MDEzZGQYhImpueCRmFchkTJkEoLggX4C6Nz/NXMIzR9/49O/0g=="},
@@ -142,7 +160,7 @@ func (us *CtmsUS) LogoutCtms(ctx context.Context, cookie string) error {
 	return nil
 }
 
-func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types.DailySchedule, error) {
+func (c *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types.DailySchedule, error) {
 
 	date := utils.FormatDateTimeToGetDailySchedule()
 
@@ -168,7 +186,7 @@ func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types
 	// Set request headers
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Cookie", cookie)
-	req.Header.Set("Origin", us.cfg.UrlCrawlerList.CtmsUrl)
+	req.Header.Set("Origin", c.cfg.UrlCrawlerList.CtmsUrl)
 	req.Header.Set("Referer", SCHOOL_SCHEDULE_URL)
 	req.Header.Set("Upgrade-Insecure-Requests", "1")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
@@ -183,7 +201,7 @@ func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types
 
 	go func() {
 		// [LOGOUT_CTMS]
-		err = us.LogoutCtms(ctx, cookie)
+		err = c.LogoutCtms(ctx, cookie)
 		if err != nil {
 			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetDailySchedule]:[error while logout]:[COOKIE=%s]:[ERROR_INFO=%v]", cookie, err)
 		}
@@ -247,9 +265,9 @@ func (us *CtmsUS) GetDailySchedule(ctx context.Context, cookie string) ([]*types
 	return dailyScheduleData, nil
 }
 
-func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.ExamSchedule, error) {
+func (c *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.ExamSchedule, error) {
 
-	examScheduleUrl := us.cfg.UrlCrawlerList.ExamScheduleUrl
+	examScheduleUrl := c.cfg.UrlCrawlerList.ExamScheduleUrl
 
 	// Create HTTP client
 	client := &http.Client{}
@@ -277,7 +295,7 @@ func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.E
 
 	go func() {
 		// [LOGOUT_CTMS]
-		err = us.LogoutCtms(ctx, cookie)
+		err = c.LogoutCtms(ctx, cookie)
 		if err != nil {
 			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetExamSchedule]:[logout]:[COOKIE=%s]:[%v]", cookie, err)
 		}
@@ -323,14 +341,14 @@ func (us *CtmsUS) GetExamSchedule(ctx context.Context, cookie string) ([]types.E
 	return examScheduleData, nil
 }
 
-func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.LoginCtmsRequest) (types.GetUpcomingExamScheduleResponse, error) {
-	cookie, err := us.LoginCtms(ctx, user)
+func (c *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.LoginCtmsRequest) (types.GetUpcomingExamScheduleResponse, error) {
+	cookie, err := c.LoginCtms(ctx, user)
 	if err != nil {
 		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetUpcomingExamSchedule]:[login ctms]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
 		return types.GetUpcomingExamScheduleResponse{}, err
 	}
 
-	currentExamsSchedule, err := us.GetExamSchedule(ctx, cookie.Cookie)
+	currentExamsSchedule, err := c.GetExamSchedule(ctx, cookie.Cookie)
 	if err != nil {
 		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetUpcomingExamSchedule]:[us.GetExamSchedule(ctx, cookie.Cookie)]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
 		return types.GetUpcomingExamScheduleResponse{}, err
@@ -340,7 +358,7 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 		"username": user.Username,
 	}
 
-	oldExamSchedule, err := us.examschedulesUS.FindExamSchedulesByUsername(ctx, filter)
+	oldExamSchedule, err := c.examschedulesUS.FindExamSchedulesByUsername(ctx, filter)
 	if err != nil {
 		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetUpcomingExamSchedule]:[us.examschedulesUS.FindExamSchedulesByUsername(ctx, filter)]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
 		return types.GetUpcomingExamScheduleResponse{}, err
@@ -351,7 +369,7 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 			Username: user.Username,
 			Subjects: currentExamsSchedule,
 		}
-		_, err := us.examschedulesUS.CreateNewExamSchedules(ctx, examSchedules)
+		_, err := c.examschedulesUS.CreateNewExamSchedules(ctx, examSchedules)
 		if err != nil {
 			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[GetUpcomingExamSchedule]:[us.examschedulesUS.CreateNewExamSchedules(ctx, examSchedules)]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
 			return types.GetUpcomingExamScheduleResponse{
@@ -373,9 +391,9 @@ func (us *CtmsUS) GetUpcomingExamSchedule(ctx context.Context, user *types.Login
 	}, nil
 }
 
-func (us *CtmsUS) SendChangedExamScheduleAndNewExamScheduleToUser(ctx context.Context, user *types.LoginCtmsRequest, id string) error {
+func (c *CtmsUS) SendChangedExamScheduleAndNewExamScheduleToUser(ctx context.Context, user *types.LoginCtmsRequest, id string) error {
 
-	data, err := us.GetUpcomingExamSchedule(ctx, user)
+	data, err := c.GetUpcomingExamSchedule(ctx, user)
 	if err != nil {
 		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[SendChangedExamScheduleAndNewExamScheduleToUser]:[us.GetUpcomingExamSchedule(ctx, user)]:[INFO=%s]:[ERROR_INFO=%v]", user.Username, err)
 		return err
@@ -388,14 +406,14 @@ func (us *CtmsUS) SendChangedExamScheduleAndNewExamScheduleToUser(ctx context.Co
 		update := bson.M{
 			"subjects": data.CurrentExamsSchedules,
 		}
-		us.examschedulesUS.UpdateExamSchedulesByUsername(ctx, filter, update)
+		c.examschedulesUS.UpdateExamSchedulesByUsername(ctx, filter, update)
 	}()
 
 	if data.OldExamsSchedules == nil {
 
 		for i := 0; i <= len(data.CurrentExamsSchedules)-1; i++ {
 			go func(idx int) {
-				us.facebookUS.SendTextMessage(ctx, id, utils.ExamScheduleMessage("Bạn có lịch thi 🥰", data.CurrentExamsSchedules[idx]))
+				c.facebookUS.SendTextMessage(ctx, id, utils.ExamScheduleMessage("Bạn có lịch thi 🥰", data.CurrentExamsSchedules[idx]))
 			}(i)
 		}
 
@@ -425,15 +443,15 @@ func (us *CtmsUS) SendChangedExamScheduleAndNewExamScheduleToUser(ctx context.Co
 			}
 
 			if isExamScheduleRoomChanged {
-				go us.facebookUS.SendTextMessage(ctx, id, utils.ExamScheduleMessage("Phòng thi của bạn đã thay đổi 😭", data.CurrentExamsSchedules[idx]))
+				go c.facebookUS.SendTextMessage(ctx, id, utils.ExamScheduleMessage("Phòng thi của bạn đã thay đổi 😭", data.CurrentExamsSchedules[idx]))
 			}
 
 			if isExamScheduleTimeChanged {
-				go us.facebookUS.SendTextMessage(ctx, id, utils.ExamScheduleMessage("Lịch thi của bạn đã thay đổi 😭", data.CurrentExamsSchedules[idx]))
+				go c.facebookUS.SendTextMessage(ctx, id, utils.ExamScheduleMessage("Lịch thi của bạn đã thay đổi 😭", data.CurrentExamsSchedules[idx]))
 			}
 
 			if newExamSchedule {
-				go us.facebookUS.SendTextMessage(ctx, id, utils.ExamScheduleMessage("Bạn có lịch thi mới 🥰", data.CurrentExamsSchedules[idx]))
+				go c.facebookUS.SendTextMessage(ctx, id, utils.ExamScheduleMessage("Bạn có lịch thi mới 🥰", data.CurrentExamsSchedules[idx]))
 			}
 		}(i)
 	}

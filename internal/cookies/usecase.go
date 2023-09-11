@@ -11,5 +11,5 @@ import (
 type UseCase interface {
 	CreateNewCookie(ctx context.Context, cookie *models.Cookie) (*mongo.InsertOneResult, error)
 	FindOneCookie(ctx context.Context, username string) (*models.Cookie, error)
-	UpdateCookie(ctx context.Context, filter bson.M, update bson.M) error
+	UpdateSertCookie(ctx context.Context, filter bson.M, update bson.M) error
 }

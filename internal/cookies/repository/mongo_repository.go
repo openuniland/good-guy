@@ -75,9 +75,20 @@ func (c *cookieRepo) FindOne(ctx context.Context, filter bson.M) (*models.Cookie
 	return cookie, nil
 }
 
-func (c *cookieRepo) UpdateOne(ctx context.Context, filter bson.M, update bson.M) (*mongo.UpdateResult, error) {
+func (c *cookieRepo) UpdateSertOne(ctx context.Context, filter bson.M, update bson.M) (*mongo.UpdateResult, error) {
 	dbName := c.cfg.MongoDB.MongoDBName
 	coll := c.mongodb.Client.Database(dbName).Collection(collectionName)
 
-	return coll.UpdateOne(ctx, filter, update)
+	update["updated_at"] = primitive.NewDateTimeFromTime(time.Now())
+
+	dataUpsert := bson.M{
+		"$set": update,
+		"$setOnInsert": bson.M{
+			"created_at": primitive.NewDateTimeFromTime(time.Now()),
+			"username":   update["username"],
+			"cookies":    update["cookies"],
+		}}
+	upsert := true
+	opts := options.Update().SetUpsert(upsert)
+	return coll.UpdateOne(ctx, filter, dataUpsert, opts)
 }

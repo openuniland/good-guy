@@ -99,7 +99,7 @@ func (c *cookieHandlers) UpdateCookie() gin.HandlerFunc {
 			"$set":  bson.M{"updated_at": primitive.NewDateTimeFromTime(time.Now())},
 		}
 
-		err = c.cookieUC.UpdateCookie(ctx, filter, pushUpdate)
+		err = c.cookieUC.UpdateSertCookie(ctx, filter, pushUpdate)
 
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{

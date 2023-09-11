@@ -11,5 +11,5 @@ import (
 type Repository interface {
 	Create(ctx context.Context, cookie *models.Cookie) (*mongo.InsertOneResult, error)
 	FindOne(ctx context.Context, filter bson.M) (*models.Cookie, error)
-	UpdateOne(ctx context.Context, filter bson.M, update bson.M) (*mongo.UpdateResult, error)
+	UpdateSertOne(ctx context.Context, filter bson.M, update bson.M) (*mongo.UpdateResult, error)
 }

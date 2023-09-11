@@ -9,6 +9,7 @@ import (
 	"github.com/openuniland/good-guy/external/facebook"
 	"github.com/openuniland/good-guy/external/types"
 	"github.com/openuniland/good-guy/internal/auth"
+	"github.com/openuniland/good-guy/internal/cookies"
 	"github.com/openuniland/good-guy/internal/models"
 	"github.com/openuniland/good-guy/internal/users"
 	"github.com/rs/zerolog/log"
@@ -20,10 +21,11 @@ type AuthUS struct {
 	ctmsUC     ctms.UseCase
 	userUC     users.UseCase
 	facebookUC facebook.UseCase
+	cookieUC   cookies.UseCase
 }
 
-func NewAuthUseCase(cfg *configs.Configs, ctmsUC ctms.UseCase, userUC users.UseCase, facebookUC facebook.UseCase) auth.UseCase {
-	return &AuthUS{cfg: cfg, ctmsUC: ctmsUC, userUC: userUC, facebookUC: facebookUC}
+func NewAuthUseCase(cfg *configs.Configs, ctmsUC ctms.UseCase, userUC users.UseCase, facebookUC facebook.UseCase, cookieUC cookies.UseCase) auth.UseCase {
+	return &AuthUS{cfg: cfg, ctmsUC: ctmsUC, userUC: userUC, facebookUC: facebookUC, cookieUC: cookieUC}
 }
 
 func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest) error {
@@ -37,6 +39,19 @@ func (a *AuthUS) Login(ctx context.Context, loginRequest *models.LoginRequest) e
 		log.Error().Err(err).Msg("error login ctms")
 		return err
 	}
+
+	go func() {
+		cookie := &models.Cookie{
+			Username: user.Username,
+			Cookies:  []string{res.Cookie},
+		}
+
+		_, err = a.cookieUC.CreateNewCookie(ctx, cookie)
+		if err != nil {
+			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginCtms]:[create new cookie]:[INFO=%s]:[ERROR_INFO%v]", user.Username, err)
+			return
+		}
+	}()
 
 	go func() {
 		// [LOGOUT_CTMS]
