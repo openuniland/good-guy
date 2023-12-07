@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/rs/zerolog/log"
@@ -107,6 +108,33 @@ func LoadConfigs(path string) (configs *Configs, err error) {
 		}
 
 		return configs, nil
+	}
+
+	dir, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Lỗi khi lấy đường dẫn thư mục hiện tại:", err)
+		return
+	}
+
+	// Mở thư mục
+	dirHandle, err := os.Open(dir)
+	if err != nil {
+		fmt.Println("Lỗi khi mở thư mục:", err)
+		return
+	}
+	defer dirHandle.Close()
+
+	// Đọc tất cả các file trong thư mục
+	files, err := dirHandle.Readdir(0)
+	if err != nil {
+		fmt.Println("Lỗi khi đọc các file trong thư mục:", err)
+		return
+	}
+
+	// Hiển thị tên các file
+	fmt.Println("Các file trong thư mục:")
+	for _, file := range files {
+		fmt.Println("FILE: " + file.Name())
 	}
 
 	var mapping *MappingConfigs
