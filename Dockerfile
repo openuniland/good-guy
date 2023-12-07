@@ -9,5 +9,6 @@ FROM alpine:3.16
 WORKDIR /app
 COPY --from=builder /app/main .
 COPY templates ./templates
+COPY .env app.env
 COPY static ./static
 CMD [ "/app/main" ]
