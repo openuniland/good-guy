@@ -2,6 +2,8 @@ package models
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
+type Provider string
+
 type User struct {
 	Id                  primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Username            string             `bson:"username" json:"username" validate:"required"`
@@ -15,4 +17,7 @@ type User struct {
 	IsDisabled          bool               `bson:"is_disabled" json:"is_disabled" default:"false"`
 	CreatedAt           primitive.DateTime `bson:"created_at" json:"created_at"`
 	UpdatedAt           primitive.DateTime `bson:"updated_at" json:"updated_at"`
+	LoginProvider       Provider           `bson:"login_provider" json:"login_provider"`
+	SessionId           string             `bson:"session_id" json:"session_id"`
+	AspxAuth            string             `bson:"aspx_auth" json:"aspx_auth"`
 }

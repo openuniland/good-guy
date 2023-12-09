@@ -60,7 +60,24 @@ func (h *houHandlers) LoginHou() gin.HandlerFunc {
 
 func (h *houHandlers) LogoutHou() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		err := h.houUC.LogoutHou(ctx)
+		req := &types.LogoutHouRequest{}
+
+		if err := ctx.ShouldBindJSON(req); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		err := utils.ValidateStruct(ctx, req)
+
+		if err != nil {
+			errors := utils.ShowErrors(err)
+			ctx.JSON(http.StatusBadRequest, errors)
+			return
+		}
+
+		err = h.houUC.LogoutHou(ctx, req.Cookie)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),

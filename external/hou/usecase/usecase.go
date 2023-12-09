@@ -12,15 +12,18 @@ import (
 	"github.com/openuniland/good-guy/constants"
 	"github.com/openuniland/good-guy/external/hou"
 	"github.com/openuniland/good-guy/external/types"
+	"github.com/openuniland/good-guy/internal/users"
 	"github.com/rs/zerolog/log"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type HouUS struct {
-	cfg *configs.Configs
+	cfg      *configs.Configs
+	userRepo users.Repository
 }
 
-func NewHouUseCase(cfg *configs.Configs) hou.UseCase {
-	return &HouUS{cfg: cfg}
+func NewHouUseCase(cfg *configs.Configs, userRepo users.Repository) hou.UseCase {
+	return &HouUS{cfg: cfg, userRepo: userRepo}
 }
 
 func (h *HouUS) LoginHou(ctx context.Context, user *types.LoginHouRequest) (*types.LoginHouResponse, error) {
@@ -90,6 +93,31 @@ func (h *HouUS) LoginHou(ctx context.Context, user *types.LoginHouRequest) (*typ
 				response.AspxAuth = fmt.Sprintf("%s=%s", cookie.Name, cookie.Value)
 			}
 		}
+
+		if response.SessionId == "" || response.AspxAuth == "" {
+			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginHou]:[response.SessionId == '']:[ERROR_INFO=%v, DATA=%v]", err, user)
+			return nil, err
+		}
+
+		filter := bson.M{"subscribed_id": user.SubscribedID}
+		userRecord, err := h.userRepo.FindOneUserByCondition(ctx, filter)
+		if err != nil {
+			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginHou]:[userRepo.FindOneUserByCondition]:[ERROR_INFO=%v, DATA=%v]", err, user)
+			return nil, err
+		}
+
+		update := bson.M{"session_id": response.SessionId, "aspx_auth": response.AspxAuth}
+		if user.Username != userRecord.Username {
+			update = bson.M{"session_id": response.SessionId, "aspx_auth": response.AspxAuth, "username": user.Username, "password": user.Password, "login_provider": constants.SINHVIEN}
+		}
+
+		user, err := h.userRepo.FindOneAndUpdate(ctx, filter, update)
+		if err != nil {
+			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginHou]:[userRepo.FindOneAndUpdate]:[ERROR_INFO=%v, DATA=%v]", err, user)
+			return nil, err
+		}
+
+		log.Info().Msgf("[INFO]:[USECASE]:[LoginHou]:[userRepo.FindOneAndUpdate]:[INFO=%v]", user)
 	} else {
 		log.Warn().Msgf("[WARN]:[USECASE]:[LoginHou]:[check if redirected]:[WARN_INFO=%s]", "There are no redirects.")
 	}
@@ -97,6 +125,25 @@ func (h *HouUS) LoginHou(ctx context.Context, user *types.LoginHouRequest) (*typ
 	return response, nil
 }
 
-func (h *HouUS) LogoutHou(ctx context.Context) error {
+func (h *HouUS) LogoutHou(ctx context.Context, SessionId string) error {
+	client := &http.Client{}
+
+	targetURL := fmt.Sprintf("%s%s", h.cfg.UrlCrawlerList.SinhVienUrl, constants.LOGOUT)
+
+	req, err := http.NewRequest("GET", targetURL, nil)
+	if err != nil {
+
+		return err
+	}
+	// Set request headers
+	req.Header.Set("Cookie", SessionId)
+
+	// Send the request
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
 	return nil
 }
