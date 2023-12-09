@@ -15,6 +15,7 @@ import (
 	examSchedulesHttp "github.com/openuniland/good-guy/internal/exam_schedules/delivery"
 	"github.com/openuniland/good-guy/internal/middlewares"
 	userHttp "github.com/openuniland/good-guy/internal/users/delivery"
+	"github.com/openuniland/good-guy/jobs"
 
 	ctmsUS "github.com/openuniland/good-guy/external/ctms/usecase"
 	facebookUS "github.com/openuniland/good-guy/external/facebook/usecase"
@@ -77,8 +78,8 @@ func (server *Server) MapHandlers() {
 	mw := middlewares.NewMiddlewareManager(server.configs)
 
 	// Jobs
-	// jobs := jobs.NewJobs(server.configs, articleUS, userUS, facebookUS, ctmsUC)
-	// jobs.Run()
+	jobs := jobs.NewJobs(server.configs, articleUS, userUS, facebookUS, ctmsUC, houUC)
+	jobs.Run()
 
 	// Init web
 

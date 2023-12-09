@@ -164,3 +164,42 @@ func (h *HouUS) LogoutHou(ctx context.Context, SessionId string) error {
 
 	return nil
 }
+
+func (h *HouUS) CheckCreditHou(ctx context.Context, SessionId string) (string, error) {
+	client := &http.Client{}
+
+	targetURL := fmt.Sprintf("%s%s", h.cfg.UrlCrawlerList.SinhVienUrl, constants.DANG_KY_LOP_TIN_CHI_B1)
+
+	req, err := http.NewRequest("GET", targetURL, nil)
+	if err != nil {
+		return constants.SOMETHING_WENT_WRONG, errors.New(constants.SOMETHING_WENT_WRONG)
+	}
+	// Set request headers
+	req.Header.Set("Cookie", SessionId)
+
+	// Send the request
+	resp, err := client.Do(req)
+	if err != nil {
+		return constants.SOMETHING_WENT_WRONG, errors.New(constants.SOMETHING_WENT_WRONG)
+	}
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return constants.SOMETHING_WENT_WRONG, errors.New(constants.SOMETHING_WENT_WRONG)
+	}
+
+	credit := doc.Find("span#lblThoi_gian_dang_ky").Text()
+	log.Info().Msgf("[INFO]:[USECASE]:[CheckCreditHou]:[credit]:[INFO=%v]", credit)
+	defer resp.Body.Close()
+
+	if credit == constants.NO_REGISTRATION_INFORMATION_YET {
+		return constants.NOTHING_YET, nil
+	}
+
+	return constants.CHANGES_HAVE_OCCURRED, nil
+}
+
+func (h *HouUS) ValidateSession(ctx context.Context, SessionId string) (string, error) {
+
+	return "", nil
+}

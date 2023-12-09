@@ -20,4 +20,5 @@ type User struct {
 	LoginProvider       Provider           `bson:"login_provider" json:"login_provider"`
 	SessionId           string             `bson:"session_id" json:"session_id"`
 	AspxAuth            string             `bson:"aspx_auth" json:"aspx_auth"`
+	IS_VIP              bool               `bson:"is_vip" json:"is_vip"`
 }

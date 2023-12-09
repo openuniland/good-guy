@@ -7,4 +7,5 @@ import (
 type Handlers interface {
 	LoginHou() gin.HandlerFunc
 	LogoutHou() gin.HandlerFunc
+	CheckCreditHou() gin.HandlerFunc
 }

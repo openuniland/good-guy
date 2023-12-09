@@ -3,9 +3,10 @@ package constants
 import "github.com/openuniland/good-guy/internal/models"
 
 const (
-	THONG_TIN_LICH_THI = "/ThongTinLichThi.aspx"
-	LOGIN              = "/login.aspx"
-	LOGOUT             = "/logout.aspx"
+	THONG_TIN_LICH_THI   = "/ThongTinLichThi.aspx"
+	LOGIN                = "/login.aspx"
+	LOGOUT               = "/logout.aspx"
+	KET_QUA_XU_LY_HOC_VU = "/KetQuaXulyHocvu.aspx"
 )
 
 const (

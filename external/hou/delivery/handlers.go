@@ -86,9 +86,42 @@ func (h *houHandlers) LogoutHou() gin.HandlerFunc {
 			return
 		}
 
-		log.Info().Msg("success")
 		ctx.JSON(http.StatusOK, gin.H{
 			"message": "success",
+		})
+	}
+}
+
+func (h *houHandlers) CheckCreditHou() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		req := &types.CheckCreditHouRequest{}
+
+		if err := ctx.ShouldBindJSON(req); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		err := utils.ValidateStruct(ctx, req)
+
+		if err != nil {
+			errors := utils.ShowErrors(err)
+			ctx.JSON(http.StatusBadRequest, errors)
+			return
+		}
+
+		message, err := h.houUC.CheckCreditHou(ctx, req.Cookie)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "success",
+			"data":    message,
 		})
 	}
 }

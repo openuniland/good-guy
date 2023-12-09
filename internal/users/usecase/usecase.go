@@ -83,3 +83,14 @@ func (u *UserUS) FindOneAndDeleteUser(ctx context.Context, filter interface{}) (
 
 	return res, nil
 }
+
+func (u *UserUS) GetVip(ctx context.Context) ([]*models.User, error) {
+	filter := bson.M{"is_vip": true}
+	users, err := u.userRepo.Find(ctx, filter)
+	if err != nil {
+		log.Error().Err(err).Msg("error getting vip users")
+		return nil, err
+	}
+
+	return users, nil
+}

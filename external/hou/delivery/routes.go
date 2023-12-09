@@ -8,4 +8,5 @@ import (
 func MapHouRoutes(houGroup *gin.RouterGroup, h hou.Handlers) {
 	houGroup.POST("/login", h.LoginHou())
 	houGroup.POST("/logout", h.LogoutHou())
+	houGroup.POST("/check-credit", h.CheckCreditHou())
 }

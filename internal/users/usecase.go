@@ -15,4 +15,5 @@ type UseCase interface {
 	GetUserByUsername(ctx context.Context, username string) (*models.User, error)
 	FindOneAndUpdateUser(ctx context.Context, filter, update bson.M) (*models.User, error)
 	FindOneAndDeleteUser(ctx context.Context, filter interface{}) (*mongo.SingleResult, error)
+	GetVip(ctx context.Context) ([]*models.User, error)
 }

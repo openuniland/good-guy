@@ -15,3 +15,7 @@ type LoginHouResponse struct {
 type LogoutHouRequest struct {
 	Cookie string `json:"cookie" validate:"required"`
 }
+
+type CheckCreditHouRequest struct {
+	Cookie string `json:"cookie" validate:"required"`
+}
