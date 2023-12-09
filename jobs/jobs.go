@@ -63,6 +63,6 @@ func (j *Jobs) Run() {
 		go j.eveningClassSchedule()
 	})
 
-	c.Start()
+	// c.Start()
 
 }

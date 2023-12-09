@@ -1,7 +1,6 @@
 package configs
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/rs/zerolog/log"
@@ -30,6 +29,8 @@ type UrlCrawlerList struct {
 	CtmsUrl             string `mapstructure:"CTMS_URL"`
 	FithouCategoriesUrl string `mapstructure:"FITHOU_CATEGORIES_URL"`
 	ExamScheduleUrl     string `mapstructure:"EXAM_SCHEDULE_URL"`
+	SinhVienUrl         string `mapstructure:"SINHVIEN_HOU_URL"`
+	CasHouUrl           string `mapstructure:"CAS_HOU_URL"`
 }
 
 type FBConfig struct {
@@ -59,6 +60,8 @@ type MappingConfigs struct {
 	CtmsUrl             string `mapstructure:"CTMS_URL"`
 	FithouCategoriesUrl string `mapstructure:"FITHOU_CATEGORIES_URL"`
 	ExamScheduleUrl     string `mapstructure:"EXAM_SCHEDULE_URL"`
+	SinhVienUrl         string `mapstructure:"SINHVIEN_HOU_URL"`
+	CasHouUrl           string `mapstructure:"CAS_HOU_URL"`
 
 	FBVerifyToken string `mapstructure:"FB_VERIFY_TOKEN"`
 	AppCode       string `mapstructure:"APP_CODE"`
@@ -97,6 +100,8 @@ func LoadConfigs(path string) (configs *Configs, err error) {
 				CtmsUrl:             os.Getenv("CTMS_URL"),
 				FithouCategoriesUrl: os.Getenv("FITHOU_CATEGORIES_URL"),
 				ExamScheduleUrl:     os.Getenv("EXAM_SCHEDULE_URL"),
+				SinhVienUrl:         os.Getenv("SINHVIEN_HOU_URL"),
+				CasHouUrl:           os.Getenv("CAS_HOU_URL"),
 			},
 			FBConfig: FBConfig{
 				FBVerifyToken: os.Getenv("FB_VERIFY_TOKEN"),
@@ -108,33 +113,6 @@ func LoadConfigs(path string) (configs *Configs, err error) {
 		}
 
 		return configs, nil
-	}
-
-	dir, err := os.Getwd()
-	if err != nil {
-		fmt.Println("Lỗi khi lấy đường dẫn thư mục hiện tại:", err)
-		return
-	}
-
-	// Mở thư mục
-	dirHandle, err := os.Open(dir)
-	if err != nil {
-		fmt.Println("Lỗi khi mở thư mục:", err)
-		return
-	}
-	defer dirHandle.Close()
-
-	// Đọc tất cả các file trong thư mục
-	files, err := dirHandle.Readdir(0)
-	if err != nil {
-		fmt.Println("Lỗi khi đọc các file trong thư mục:", err)
-		return
-	}
-
-	// Hiển thị tên các file
-	fmt.Println("Các file trong thư mục:")
-	for _, file := range files {
-		fmt.Println("FILE: " + file.Name())
 	}
 
 	var mapping *MappingConfigs
@@ -177,6 +155,8 @@ func LoadConfigs(path string) (configs *Configs, err error) {
 			CtmsUrl:             mapping.CtmsUrl,
 			FithouCategoriesUrl: mapping.FithouCategoriesUrl,
 			ExamScheduleUrl:     mapping.ExamScheduleUrl,
+			SinhVienUrl:         mapping.SinhVienUrl,
+			CasHouUrl:           mapping.CasHouUrl,
 		},
 		FBConfig: FBConfig{
 			FBVerifyToken: mapping.FBVerifyToken,

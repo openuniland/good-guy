@@ -7,6 +7,7 @@ import (
 	ctmsHttp "github.com/openuniland/good-guy/external/ctms/delivery"
 	facebookHttp "github.com/openuniland/good-guy/external/facebook/delivery"
 	fithouHttp "github.com/openuniland/good-guy/external/fithou/delivery"
+	houHttp "github.com/openuniland/good-guy/external/hou/delivery"
 	articleHttp "github.com/openuniland/good-guy/internal/articles/delivery"
 	authHttp "github.com/openuniland/good-guy/internal/auth/delivery"
 	commonHttp "github.com/openuniland/good-guy/internal/common/delivery"
@@ -14,11 +15,11 @@ import (
 	examSchedulesHttp "github.com/openuniland/good-guy/internal/exam_schedules/delivery"
 	"github.com/openuniland/good-guy/internal/middlewares"
 	userHttp "github.com/openuniland/good-guy/internal/users/delivery"
-	"github.com/openuniland/good-guy/jobs"
 
 	ctmsUS "github.com/openuniland/good-guy/external/ctms/usecase"
 	facebookUS "github.com/openuniland/good-guy/external/facebook/usecase"
 	fithouUS "github.com/openuniland/good-guy/external/fithou/usecase"
+	houUC "github.com/openuniland/good-guy/external/hou/usecase"
 	articleUS "github.com/openuniland/good-guy/internal/articles/usecase"
 	authUC "github.com/openuniland/good-guy/internal/auth/usecase"
 	commonUC "github.com/openuniland/good-guy/internal/common/usecase"
@@ -58,6 +59,7 @@ func (server *Server) MapHandlers() {
 	ctmsUC := ctmsUS.NewCtmsUseCase(server.configs, examSchedulesUS, facebookUS, userUS, cookieUC)
 	authUC := authUC.NewAuthUseCase(server.configs, ctmsUC, userUS, facebookUS, cookieUC)
 	commonUC := commonUC.NewCommonUseCase(server.configs, facebookUS, ctmsUC, userUS, articleUS, cookieUC)
+	houUC := houUC.NewHouUseCase(server.configs)
 
 	// Init handlers
 	authCtmsHandlers := ctmsHttp.NewCtmsHandlers(server.configs, ctmsUC)
@@ -69,13 +71,14 @@ func (server *Server) MapHandlers() {
 	authHandlers := authHttp.NewCtmsHandlers(server.configs, authUC)
 	commonHandlers := commonHttp.NewCommonHandlers(server.configs, commonUC)
 	cookieHandlers := cookieHttp.NewCookieHandlers(server.configs, cookieUC)
+	houHandlers := houHttp.NewHouHandlers(server.configs, houUC)
 
 	// Init middlewares
 	mw := middlewares.NewMiddlewareManager(server.configs)
 
 	// Jobs
-	jobs := jobs.NewJobs(server.configs, articleUS, userUS, facebookUS, ctmsUC)
-	jobs.Run()
+	// jobs := jobs.NewJobs(server.configs, articleUS, userUS, facebookUS, ctmsUC)
+	// jobs.Run()
 
 	// Init web
 
@@ -100,6 +103,7 @@ func (server *Server) MapHandlers() {
 	auth := v1.Group("/auth")
 	common := v1.Group("/common")
 	cookie := v1.Group("/cookies")
+	hou := v1.Group("/hou")
 
 	health.GET("/ping", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
@@ -117,6 +121,7 @@ func (server *Server) MapHandlers() {
 	commonHttp.MapCommonRoutes(common, commonHandlers)
 	authHttp.MapAuthRoutes(auth, authHandlers)
 	cookieHttp.MapCookieRoutes(cookie, cookieHandlers, mw)
+	houHttp.MapHouRoutes(hou, houHandlers)
 
 	server.router = router
 }
