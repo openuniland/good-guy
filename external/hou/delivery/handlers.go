@@ -46,6 +46,7 @@ func (h *houHandlers) LoginHou() gin.HandlerFunc {
 			log.Error().Err(err).Msgf("[ERROR]:[HANDLERS]:[LoginHou]:[houUC.LoginHou]:[ERROR_INFO=%v, DATA=%v]", err, req)
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": "error",
+				"error":   err.Error(),
 			})
 			return
 		}

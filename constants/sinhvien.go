@@ -17,3 +17,8 @@ const (
 	CTMS     models.Provider = "CTMS"
 	SINHVIEN models.Provider = "SINHVIEN"
 )
+
+const (
+	LOGIN_UNSUCCESSFUL       = "Đăng nhập không thành công."
+	LOGIN_UNSUCCESSFUL_ALERT = "login unsuccessful"
+)

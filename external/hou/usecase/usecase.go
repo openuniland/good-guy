@@ -2,10 +2,12 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/openuniland/good-guy/configs"
@@ -40,13 +42,13 @@ func (h *HouUS) LoginHou(ctx context.Context, user *types.LoginHouRequest) (*typ
 	resp, err := client.Get(targetURL)
 	if err != nil {
 		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginHou]:[client.Get]:[ERROR_INFO=%v]", err)
-		return nil, err
+		return nil, errors.New(constants.LOGIN_UNSUCCESSFUL_ALERT)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginHou]:[goquery]:[ERROR_INFO=%v]", err)
-		return nil, err
+		return nil, errors.New(constants.LOGIN_UNSUCCESSFUL_ALERT)
 	}
 
 	// find input with name="execution" type="hidden"
@@ -56,7 +58,7 @@ func (h *HouUS) LoginHou(ctx context.Context, user *types.LoginHouRequest) (*typ
 
 	if execution == "" {
 		log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginHou]:[execution]:[ERROR_INFO=%s]", "execution is empty")
-		return nil, nil
+		return nil, errors.New(constants.LOGIN_UNSUCCESSFUL_ALERT)
 	}
 
 	response := &types.LoginHouResponse{
@@ -77,8 +79,23 @@ func (h *HouUS) LoginHou(ctx context.Context, user *types.LoginHouRequest) (*typ
 		})
 		if err != nil {
 			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginHou]:[client.PostForm]:[ERROR_INFO=%v, DATA=%v]", err, user)
-			return nil, err
+			return nil, errors.New(constants.LOGIN_UNSUCCESSFUL_ALERT)
 		}
+
+		doc, err := goquery.NewDocumentFromReader(resp.Body)
+		if err != nil {
+			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginHou]:[goquery]:[ERROR_INFO=%v]", err)
+			return nil, errors.New(constants.LOGIN_UNSUCCESSFUL_ALERT)
+		}
+
+		loginUnsuccessfulText := doc.Find("div.alert.alert-danger span").Text()
+		if strings.TrimSpace(loginUnsuccessfulText) == constants.LOGIN_UNSUCCESSFUL {
+			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginHou]:[loginUnsuccessfulText]:[DATA=%v]", user)
+			return nil, errors.New(constants.INCORRECCT_USERNAME_OR_PASSWORD)
+		}
+
+		log.Info().Msgf("[INFO]:[USECASE]:[LoginHou]:[client.PostForm]:[DATA=%v]", loginUnsuccessfulText)
+
 		defer resp.Body.Close()
 
 		// read cookies
@@ -96,14 +113,14 @@ func (h *HouUS) LoginHou(ctx context.Context, user *types.LoginHouRequest) (*typ
 
 		if response.SessionId == "" || response.AspxAuth == "" {
 			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginHou]:[response.SessionId == '']:[ERROR_INFO=%v, DATA=%v]", err, user)
-			return nil, err
+			return nil, errors.New(constants.LOGIN_UNSUCCESSFUL_ALERT)
 		}
 
 		filter := bson.M{"subscribed_id": user.SubscribedID}
 		userRecord, err := h.userRepo.FindOneUserByCondition(ctx, filter)
 		if err != nil {
 			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginHou]:[userRepo.FindOneUserByCondition]:[ERROR_INFO=%v, DATA=%v]", err, user)
-			return nil, err
+			return nil, errors.New(constants.LOGIN_UNSUCCESSFUL_ALERT)
 		}
 
 		update := bson.M{"session_id": response.SessionId, "aspx_auth": response.AspxAuth}
@@ -114,7 +131,7 @@ func (h *HouUS) LoginHou(ctx context.Context, user *types.LoginHouRequest) (*typ
 		user, err := h.userRepo.FindOneAndUpdate(ctx, filter, update)
 		if err != nil {
 			log.Error().Err(err).Msgf("[ERROR]:[USECASE]:[LoginHou]:[userRepo.FindOneAndUpdate]:[ERROR_INFO=%v, DATA=%v]", err, user)
-			return nil, err
+			return nil, errors.New(constants.LOGIN_UNSUCCESSFUL_ALERT)
 		}
 
 		log.Info().Msgf("[INFO]:[USECASE]:[LoginHou]:[userRepo.FindOneAndUpdate]:[INFO=%v]", user)
@@ -133,7 +150,7 @@ func (h *HouUS) LogoutHou(ctx context.Context, SessionId string) error {
 	req, err := http.NewRequest("GET", targetURL, nil)
 	if err != nil {
 
-		return err
+		return errors.New(constants.LOGIN_UNSUCCESSFUL_ALERT)
 	}
 	// Set request headers
 	req.Header.Set("Cookie", SessionId)
@@ -141,7 +158,7 @@ func (h *HouUS) LogoutHou(ctx context.Context, SessionId string) error {
 	// Send the request
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return errors.New(constants.LOGIN_UNSUCCESSFUL_ALERT)
 	}
 	defer resp.Body.Close()
 
